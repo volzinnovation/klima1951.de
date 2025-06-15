@@ -1,1 +1,1 @@
-Ein Browser für DWD HYRAS-DE Daten.
+Ein [frontend/index.html](Browser für DWD HYRAS-DE Daten).
