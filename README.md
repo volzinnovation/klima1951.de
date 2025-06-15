@@ -1,1 +1,1 @@
-Ein [frontend/index.html](Browser für DWD HYRAS-DE Daten).
+Ein [Browser für DWD HYRAS-DE Daten](frontend/index.html).
