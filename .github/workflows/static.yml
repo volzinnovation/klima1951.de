@@ -22,8 +22,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
-  jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
