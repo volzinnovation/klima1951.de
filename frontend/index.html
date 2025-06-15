@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Das Wetter in 🇩🇪 seit 1951</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Die App verwendet eine Dashboard-Struktur auf einer einzigen Seite. Oben befindet sich ein Bedienfeld für alle Benutzereingaben (Ort, Datum, Parameter, Aggregation), darunter der Hauptbereich für die Visualisierung. Diese Struktur wurde gewählt, um den Benutzern eine klare und direkte Kontrolle zu ermöglichen, bei der sie ihre Auswahl treffen und das Ergebnis sofort im Kontext sehen können. Dies ist der effizienteste Weg, um den aufgabenorientierten Charakter des Anforderungsdokuments zu unterstützen: Eingaben anpassen und das Ergebnis analysieren. -->
+    <!-- Visualization & Content Choices: 1. Ortseingabe: Ziel=Informieren, Methode=Texteingabe, Interaktion=Simulierte Geokodierung nach Klick, Begründung=Standard für Ortssuche. 2. Zeitreihe/Aggregate: Ziel=Vergleichen/Ändern, Methode=Dynamisches Liniendiagramm (täglich) oder Balkendiagramm (aggregiert) mit Chart.js, Interaktion=Benutzer wählt Parameter/Aggregation, Diagramm wird mit dualer Y-Achse aktualisiert, Begründung=Erfüllt die Kernanforderung der Spezifikation zur Visualisierung von Trends und Vergleichen. 3. Daten-Export: Ziel=Exportieren, Methode=Canvas-zu-PNG-Konvertierung, Interaktion=Klick auf Download-Button, Begründung=Direkte Anforderung aus der Spezifikation. 4. Regression: Ziel=Analysieren, Methode=Berechnung im Frontend und Anzeige als überlagerte Linie in Chart.js, Interaktion=Umschalter zum Ein-/Ausblenden, Begründung=Erweitert die analytischen Fähigkeiten gemäß der Anforderung. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 50vh;
+            width: 100%;
+            max-height: 500px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #6b7280;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .param-checkbox:checked + label {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #3b82f6;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-stone-700">Das Wetter in 🇩🇪 seit 1951</h1>
+            <p class="text-stone-500 mt-2">Analysieren Sie historische Wetterdaten für Standorte in Deutschland.</p>
+        </header>
+
+        <main>
+            <div id="controls" class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-stone-200 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                    
+                    <div class="lg:col-span-1">
+                        <label for="location" class="block text-sm font-medium text-stone-600 mb-1">1. Standort</label>
+                        <input type="text" id="location" placeholder="z.B. Berlin, Hamburg..." class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="startDate" class="block text-sm font-medium text-stone-600 mb-1">2. Startdatum</label>
+                            <input type="date" id="startDate" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label for="endDate" class="block text-sm font-medium text-stone-600 mb-1">3. Enddatum</label>
+                            <input type="date" id="endDate" class="w-full p-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div class="lg:col-span-1">
+                        <label class="block text-sm font-medium text-stone-600 mb-1">4. Aggregation</label>
+                        <div id="aggregation" class="flex bg-stone-100 p-1 rounded-lg">
+                            <button data-value="daily" class="aggregation-btn flex-1 p-2 text-sm rounded-md bg-white text-blue-600 shadow">Täglich</button>
+                            <button data-value="weekly" class="aggregation-btn flex-1 p-2 text-sm rounded-md text-stone-600">Wöchentlich</button>
+                            <button data-value="monthly" class="aggregation-btn flex-1 p-2 text-sm rounded-md text-stone-600">Monatlich</button>
+                            <button data-value="yearly" class="aggregation-btn flex-1 p-2 text-sm rounded-md text-stone-600">Jährlich</button>
+                        </div>
+                    </div>
+
+                     <div id="regression-control-container" class="lg:col-span-1">
+                        <label class="block text-sm font-medium text-stone-600 mb-1">5. Trendanalyse</label>
+                        <div class="relative inline-block w-full text-left">
+                           <div class="flex items-center justify-center bg-stone-100 p-1 rounded-lg h-full">
+                             <label for="regression-toggle" class="flex items-center cursor-pointer">
+                               <div class="relative">
+                                 <input type="checkbox" id="regression-toggle" class="sr-only">
+                                 <div class="block bg-stone-200 w-14 h-8 rounded-full"></div>
+                                 <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                               </div>
+                               <div class="ml-3 text-stone-700 text-sm font-medium">Regression</div>
+                             </label>
+                           </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-stone-600 mb-2">6. Messwerte auswählen</label>
+                    <div id="parameters" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                        <div class="flex-1">
+                            <input type="checkbox" id="param_tas" value="tas" class="hidden param-checkbox">
+                            <label for="param_tas" class="flex flex-col items-center justify-center text-center p-3 border-2 border-stone-200 rounded-lg cursor-pointer hover:bg-stone-50 transition">
+                                <span class="text-2xl">🌡️</span><span class="text-xs font-semibold mt-1">Temp. Mittel</span>
+                            </label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="checkbox" id="param_tasmax" value="tasmax" class="hidden param-checkbox">
+                            <label for="param_tasmax" class="flex flex-col items-center justify-center text-center p-3 border-2 border-stone-200 rounded-lg cursor-pointer hover:bg-stone-50 transition">
+                                <span class="text-2xl">🥵</span><span class="text-xs font-semibold mt-1">Temp. Max</span>
+                            </label>
+                        </div>
+                         <div class="flex-1">
+                            <input type="checkbox" id="param_tasmin" value="tasmin" class="hidden param-checkbox">
+                            <label for="param_tasmin" class="flex flex-col items-center justify-center text-center p-3 border-2 border-stone-200 rounded-lg cursor-pointer hover:bg-stone-50 transition">
+                                <span class="text-2xl">🥶</span><span class="text-xs font-semibold mt-1">Temp. Min</span>
+                            </label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="checkbox" id="param_pr" value="pr" class="hidden param-checkbox">
+                            <label for="param_pr" class="flex flex-col items-center justify-center text-center p-3 border-2 border-stone-200 rounded-lg cursor-pointer hover:bg-stone-50 transition">
+                                <span class="text-2xl">💧</span><span class="text-xs font-semibold mt-1">Niederschlag</span>
+                            </label>
+                        </div>
+                        <div class="flex-1">
+                            <input type="checkbox" id="param_hurs" value="hurs" class="hidden param-checkbox">
+                            <label for="param_hurs" class="flex flex-col items-center justify-center text-center p-3 border-2 border-stone-200 rounded-lg cursor-pointer hover:bg-stone-50 transition">
+                                <span class="text-2xl">💨</span><span class="text-xs font-semibold mt-1">Luftfeuchte</span>
+                            </label>
+                        </div>
+                         <div class="flex-1">
+                            <input type="checkbox" id="param_rsds" value="rsds" class="hidden param-checkbox">
+                            <label for="param_rsds" class="flex flex-col items-center justify-center text-center p-3 border-2 border-stone-200 rounded-lg cursor-pointer hover:bg-stone-50 transition">
+                                <span class="text-2xl">☀️</span><span class="text-xs font-semibold mt-1">Einstrahlung</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chart-section" class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="chart-title" class="text-xl font-bold text-stone-700">Ihre Auswertung</h2>
+                </div>
+                <div id="message-box" class="min-h-[50vh] flex items-center justify-center text-stone-500">
+                    <div id="initial-message" class="text-center">
+                        <p class="text-lg">Bitte wählen Sie einen Standort und Parameter aus, um die Analyse zu starten.</p>
+                        <p class="text-sm mt-2">(z.B. "Berlin", letzter Monat, Temp. Mittel)</p>
+                    </div>
+                    <div id="loading-indicator" class="hidden flex-col items-center">
+                         <div class="loader"></div>
+                         <p class="mt-4 text-stone-600">Daten werden geladen...</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="weatherChart"></canvas>
+                </div>
+                <div id="download-controls" class="mt-6 flex justify-center gap-4">
+                    <button id="downloadChart" class="bg-stone-200 text-stone-700 font-semibold py-2 px-4 rounded-lg hover:bg-stone-300 transition text-sm disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed" disabled>
+                        Als PNG laden
+                    </button>
+                    <button id="downloadCSV" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition text-sm disabled:bg-stone-300 disabled:text-stone-400 disabled:cursor-not-allowed" disabled>
+                        Als CSV laden
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-sm text-stone-400">
+            <p>Datenquelle (simuliert): DWD Climate Data Center (CDC), HYRAS-DE Rasterdaten. Dies ist eine Demo-Anwendung.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const locationInput = document.getElementById('location');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const downloadChartBtn = document.getElementById('downloadChart');
+            const downloadCSVBtn = document.getElementById('downloadCSV');
+            const aggregationContainer = document.getElementById('aggregation');
+            const chartTitle = document.getElementById('chart-title');
+            const messageBox = document.getElementById('message-box');
+            const initialMessage = document.getElementById('initial-message');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const chartContainer = document.querySelector('.chart-container');
+            const parametersContainer = document.getElementById('parameters');
+            const regressionToggle = document.getElementById('regression-toggle');
+            const regressionControlContainer = document.getElementById('regression-control-container');
+
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            let weatherChart;
+            let currentAggregation = 'daily';
+            let updateTimeout;
+            let currentChartData = null; // Store data for CSV export
+
+            const PARAMETER_CONFIG = {
+                'tas': { name: 'Mittlere Temp.', unit: '°C', color: '#3b82f6', yAxisID: 'y' },
+                'tasmax': { name: 'Maximale Temp.', unit: '°C', color: '#ef4444', yAxisID: 'y' },
+                'tasmin': { name: 'Minimale Temp.', unit: '°C', color: '#22d3ee', yAxisID: 'y' },
+                'pr': { name: 'Niederschlag', unit: 'mm', color: '#14b8a6', yAxisID: 'y1' },
+                'hurs': { name: 'Luftfeuchte', unit: '%', color: '#a855f7', yAxisID: 'y1' },
+                'rsds': { name: 'Einstrahlung', unit: 'W/m²', color: '#f59e0b', yAxisID: 'y1' }
+            };
+            
+            const toYMD = (date) => date.toISOString().split('T')[0];
+
+            const adjustEndDateConstraints = (aggregation) => {
+                const today = new Date();
+                let maxDate;
+
+                switch (aggregation) {
+                    case 'weekly':
+                        maxDate = new Date();
+                        maxDate.setDate(maxDate.getDate() - (maxDate.getDay() || 7));
+                        break;
+                    case 'monthly':
+                        maxDate = new Date(today.getFullYear(), today.getMonth(), 0);
+                        break;
+                    case 'yearly':
+                        maxDate = new Date(today.getFullYear() -1, 11, 31);
+                        break;
+                    case 'daily':
+                    default:
+                        maxDate = new Date();
+                        maxDate.setDate(maxDate.getDate() - 2);
+                        break;
+                }
+                
+                const maxDateString = toYMD(maxDate);
+                endDateInput.max = maxDateString;
+
+                if (endDateInput.value > maxDateString) {
+                    endDateInput.value = maxDateString;
+                }
+            };
+            
+            const setDateDefaults = () => {
+                const dayBeforeYesterday = new Date();
+                dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+                
+                const oneMonthAgo = new Date(dayBeforeYesterday);
+                oneMonthAgo.setMonth(dayBeforeYesterday.getMonth() - 1);
+
+                const dayBeforeYesterdayString = toYMD(dayBeforeYesterday);
+                const oneMonthAgoString = toYMD(oneMonthAgo);
+                const minDateString = '1951-01-01';
+
+                startDateInput.min = minDateString;
+                startDateInput.max = dayBeforeYesterdayString;
+                startDateInput.value = oneMonthAgoString;
+
+                endDateInput.min = minDateString;
+                endDateInput.max = dayBeforeYesterdayString;
+                endDateInput.value = dayBeforeYesterdayString;
+            };
+            
+            const debounce = (func, delay) => {
+                return (...args) => {
+                    clearTimeout(updateTimeout);
+                    updateTimeout = setTimeout(() => {
+                        func.apply(this, args);
+                    }, delay);
+                };
+            };
+            
+            const calculateLinearRegression = (data) => {
+                const n = data.length;
+                if (n < 2) return null;
+
+                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                const validPoints = data.filter(p => p.y !== null && !isNaN(p.y));
+                if(validPoints.length < 2) return null;
+
+                for (const point of validPoints) {
+                    sumX += point.x;
+                    sumY += point.y;
+                    sumXY += point.x * point.y;
+                    sumXX += point.x * point.x;
+                }
+                const slope = (validPoints.length * sumXY - sumX * sumY) / (validPoints.length * sumXX - sumX * sumX);
+                const intercept = (sumY - slope * sumX) / validPoints.length;
+                
+                return x => slope * x + intercept;
+            };
+
+            const mockGeocode = (location) => {
+                return new Promise((resolve, reject) => {
+                    const knownLocations = {
+                        'berlin': { lat: 52.52, lon: 13.40 },
+                        'hamburg': { lat: 53.55, lon: 9.99 },
+                        'münchen': { lat: 48.13, lon: 11.58 },
+                        'köln': { lat: 50.93, lon: 6.96 },
+                        'frankfurt': { lat: 50.11, lon: 8.68 }
+                    };
+                    const coords = knownLocations[location.toLowerCase()];
+                    if (coords) {
+                        resolve(coords);
+                    } else {
+                        reject(`Standort "${location}" nicht in der Demo gefunden.`);
+                    }
+                });
+            };
+
+            const generateMockData = (startDate, endDate, location) => {
+                let data = [];
+                let currentDate = new Date(startDate);
+                const end = new Date(endDate);
+                const cityModifier = location.charCodeAt(0) % 10;
+
+                while (currentDate <= end) {
+                    const dayOfYear = (currentDate - new Date(currentDate.getFullYear(), 0, 0)) / 86400000;
+                    const tempSin = Math.sin((dayOfYear - 90) * (2 * Math.PI / 365));
+                    
+                    const tas = parseFloat((10 + tempSin * 12 + (Math.random() - 0.5) * 4 + cityModifier).toFixed(1));
+                    const tasmax = parseFloat((tas + Math.random() * 5 + 1).toFixed(1));
+                    const tasmin = parseFloat((tas - Math.random() * 5 - 1).toFixed(1));
+                    const pr = Math.random() > 0.8 ? parseFloat((Math.random() * 15).toFixed(1)) : 0;
+                    const hurs = parseFloat((70 - tempSin * 20 + (Math.random() - 0.5) * 15).toFixed(1));
+                    const rsds = Math.max(0, parseFloat((150 + tempSin * 100 + (Math.random() - 0.5) * 50).toFixed(1)));
+
+                    data.push({
+                        date: new Date(currentDate),
+                        tas, tasmax, tasmin, pr, hurs, rsds
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                return data;
+            };
+
+            const aggregateData = (data, level) => {
+                if (level === 'daily') return data;
+                
+                const getGroupKey = {
+                    'weekly': d => {
+                        const date = new Date(d.date);
+                        date.setDate(date.getDate() - date.getDay());
+                        return toYMD(date);
+                    },
+                    'monthly': d => d.date.toISOString().substring(0, 7),
+                    'yearly': d => d.date.getFullYear().toString()
+                };
+
+                const grouped = data.reduce((acc, curr) => {
+                    const key = getGroupKey[level](curr);
+                    if (!acc[key]) {
+                        acc[key] = {
+                            count: 0, tas: 0, tasmax: -Infinity, tasmin: Infinity, pr: 0, hurs: 0, rsds: 0
+                        };
+                    }
+                    acc[key].count++;
+                    acc[key].tas += curr.tas;
+                    acc[key].tasmax = Math.max(acc[key].tasmax, curr.tasmax);
+                    acc[key].tasmin = Math.min(acc[key].tasmin, curr.tasmin);
+                    acc[key].pr += curr.pr;
+                    acc[key].hurs += curr.hurs;
+                    acc[key].rsds += curr.rsds;
+                    return acc;
+                }, {});
+
+                return Object.entries(grouped).map(([key, value]) => ({
+                    date: level === 'yearly' ? new Date(parseInt(key), 0, 1) : new Date(key),
+                    tas: parseFloat((value.tas / value.count).toFixed(1)),
+                    tasmax: value.tasmax,
+                    tasmin: value.tasmin,
+                    pr: parseFloat(value.pr.toFixed(1)),
+                    hurs: parseFloat((value.hurs / value.count).toFixed(1)),
+                    rsds: parseFloat((value.rsds / value.count).toFixed(1))
+                }));
+            };
+
+            const displayChart = (data, params) => {
+                if (weatherChart) {
+                    weatherChart.destroy();
+                }
+
+                chartContainer.style.display = 'block';
+                messageBox.style.display = 'none';
+
+                const aggregated = aggregateData(data, currentAggregation);
+                const labels = aggregated.map(d => {
+                    const date = new Date(d.date);
+                    if(currentAggregation === 'monthly') return date.toLocaleDateString('de-DE', {year: 'numeric', month: 'short'});
+                    if(currentAggregation === 'yearly') return date.getFullYear().toString();
+                    return date.toLocaleDateString('de-DE', { year: 'numeric', month: 'short', day: 'numeric' });
+                });
+                
+                const datasets = [];
+                let y1Exists = false;
+                
+                // For CSV export
+                currentChartData = {
+                    labels: labels,
+                    aggregation: currentAggregation,
+                    params: params,
+                    datasets: {}
+                };
+
+                params.forEach(paramKey => {
+                    const config = PARAMETER_CONFIG[paramKey];
+                    if (config.yAxisID === 'y1') y1Exists = true;
+                    
+                    const paramData = aggregated.map(d => d[paramKey]);
+                    currentChartData.datasets[paramKey] = { data: paramData, regressionData: [] };
+
+                    datasets.push({
+                        label: config.name,
+                        data: paramData,
+                        borderColor: config.color,
+                        backgroundColor: config.color + 'B3',
+                        yAxisID: config.yAxisID,
+                        type: currentAggregation === 'daily' ? 'line' : 'bar',
+                        tension: 0.1,
+                        borderWidth: 2,
+                        pointRadius: currentAggregation === 'daily' ? 2 : 0,
+                        order: 1
+                    });
+                    
+                    if (regressionToggle.checked && currentAggregation === 'daily') {
+                        const regressionDataPoints = aggregated.map((d, i) => ({ x: i, y: d[paramKey] }));
+                        const regressionLine = calculateLinearRegression(regressionDataPoints);
+                        if(regressionLine){
+                            const regressionValues = regressionDataPoints.map(d => regressionLine(d.x).toFixed(2));
+                            currentChartData.datasets[paramKey].regressionData = regressionValues;
+                            datasets.push({
+                                label: `Trend (${config.name})`,
+                                data: regressionValues,
+                                type: 'line',
+                                borderColor: config.color,
+                                borderWidth: 1.5,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                yAxisID: config.yAxisID,
+                                order: 0,
+                                tooltip: { enabled: false }
+                            });
+                        }
+                    }
+                });
+                
+                const chartOptions = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { title: { display: true, text: 'Datum' } },
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temperatur (°C)' } },
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if(context.dataset.label.startsWith('Trend')) return null;
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        const unit = PARAMETER_CONFIG[params[context.datasetIndex]].unit;
+                                        label += context.parsed.y + ' ' + unit;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                };
+
+                if (y1Exists) {
+                    chartOptions.scales.y1 = {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Niederschlag (mm) / Feuchte (%) / Einstrahlung (W/m²)' },
+                        grid: { drawOnChartArea: false }
+                    };
+                }
+
+                weatherChart = new Chart(ctx, { data: { labels, datasets }, options: chartOptions });
+                downloadChartBtn.disabled = false;
+                downloadCSVBtn.disabled = false;
+            };
+
+            const showMessage = (text, isError = false) => {
+                initialMessage.style.display = 'none';
+                loadingIndicator.style.display = 'none';
+                
+                const messageElement = document.createElement('p');
+                messageElement.textContent = text;
+                messageElement.className = isError ? 'text-red-500' : 'text-stone-500';
+
+                messageBox.innerHTML = '';
+                messageBox.appendChild(messageElement);
+                messageBox.style.display = 'flex';
+
+                if (weatherChart) weatherChart.destroy();
+                chartContainer.style.display = 'none';
+                downloadChartBtn.disabled = true;
+                downloadCSVBtn.disabled = true;
+                currentChartData = null;
+            };
+            
+            const updateChartFlow = async () => {
+                const location = locationInput.value.trim();
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                const selectedParams = Array.from(document.querySelectorAll('#parameters input:checked')).map(el => el.value);
+
+                if (!location || !startDate || !endDate || selectedParams.length === 0) {
+                    showMessage('Bitte alle Felder ausfüllen und mindestens einen Messwert auswählen.');
+                    return;
+                }
+                if (new Date(startDate) > new Date(endDate)) {
+                    showMessage('Das Startdatum darf nicht nach dem Enddatum liegen.', true);
+                    return;
+                }
+
+                initialMessage.style.display = 'none';
+                loadingIndicator.style.display = 'flex';
+                messageBox.style.display = 'flex';
+                if(weatherChart) weatherChart.destroy();
+                chartContainer.style.display = 'none';
+
+                try {
+                    const coords = await mockGeocode(location);
+                    const mockData = generateMockData(startDate, endDate, location);
+                    
+                    chartTitle.textContent = `Wetterauswertung für ${location.charAt(0).toUpperCase() + location.slice(1)}`;
+                    displayChart(mockData, selectedParams);
+                    loadingIndicator.style.display = 'none';
+                } catch (error) {
+                    showMessage(error, true);
+                }
+            };
+
+            const debouncedUpdate = debounce(updateChartFlow, 500);
+
+            locationInput.addEventListener('input', debouncedUpdate);
+            startDateInput.addEventListener('change', updateChartFlow);
+            endDateInput.addEventListener('change', updateChartFlow);
+            parametersContainer.addEventListener('change', updateChartFlow);
+            regressionToggle.addEventListener('change', updateChartFlow);
+            
+            aggregationContainer.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON' && e.target.dataset.value !== currentAggregation) {
+                    currentAggregation = e.target.dataset.value;
+                    document.querySelectorAll('.aggregation-btn').forEach(btn => {
+                        btn.classList.remove('bg-white', 'text-blue-600', 'shadow');
+                        btn.classList.add('text-stone-600');
+                    });
+                    e.target.classList.add('bg-white', 'text-blue-600', 'shadow');
+                    e.target.classList.remove('text-stone-600');
+                    
+                    adjustEndDateConstraints(currentAggregation);
+                    
+                    if (currentAggregation !== 'daily') {
+                        regressionToggle.checked = false;
+                        regressionControlContainer.classList.add('opacity-50', 'pointer-events-none');
+                    } else {
+                        regressionControlContainer.classList.remove('opacity-50', 'pointer-events-none');
+                    }
+                    
+                    updateChartFlow();
+                }
+            });
+
+            downloadChartBtn.addEventListener('click', () => {
+                if (weatherChart) {
+                    const location = locationInput.value.trim();
+                    const startDate = new Date(startDateInput.value).toLocaleDateString('de-DE');
+                    const endDate = new Date(endDateInput.value).toLocaleDateString('de-DE');
+                    const titleText = `Historische Wetterdaten für ${location.charAt(0).toUpperCase() + location.slice(1)} (${startDate} - ${endDate})`;
+                    const sourceText = "Quelle: klima1951.de / Auf Basis der DWD Climate Data Center (CDC), HYRAS-DE Rasterdaten.";
+                    
+                    const titleHeight = 40;
+                    const sourceHeight = 30;
+                    
+                    const originalCanvas = weatherChart.canvas;
+                    const newCanvas = document.createElement('canvas');
+                    const newCtx = newCanvas.getContext('2d');
+                    
+                    newCanvas.width = originalCanvas.width;
+                    newCanvas.height = originalCanvas.height + titleHeight + sourceHeight;
+                    
+                    newCtx.fillStyle = '#FFFFFF';
+                    newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+                    
+                    newCtx.fillStyle = '#1c1917';
+                    newCtx.font = 'bold 18px Inter, sans-serif';
+                    newCtx.textAlign = 'center';
+                    newCtx.fillText(titleText, newCanvas.width / 2, 25);
+                    
+                    newCtx.drawImage(originalCanvas, 0, titleHeight);
+                    
+                    newCtx.fillStyle = '#6b7280';
+                    newCtx.font = '12px Inter, sans-serif';
+                    newCtx.textAlign = 'center';
+                    newCtx.fillText(sourceText, newCanvas.width / 2, newCanvas.height - 10);
+                    
+                    const link = document.createElement('a');
+                    link.href = newCanvas.toDataURL('image/png');
+                    link.download = `wetter-chart_${location}_${toYMD(new Date())}.png`;
+                    link.click();
+                }
+            });
+            
+            downloadCSVBtn.addEventListener('click', () => {
+                if (!currentChartData) return;
+                
+                const headers = ['Datum', 'Aggregation'];
+                currentChartData.params.forEach(paramKey => {
+                    const config = PARAMETER_CONFIG[paramKey];
+                    headers.push(`${config.name.replace(/\./g, '')} (${config.unit})`);
+                    if(currentChartData.datasets[paramKey].regressionData.length > 0) {
+                        headers.push(`Trend ${config.name.replace(/\./g, '')} (${config.unit})`);
+                    }
+                });
+                
+                const rows = currentChartData.labels.map((label, index) => {
+                    const row = [label, currentChartData.aggregation];
+                    currentChartData.params.forEach(paramKey => {
+                        const dataSet = currentChartData.datasets[paramKey];
+                        const value = dataSet.data[index];
+                        row.push(value !== null && value !== undefined ? String(value).replace('.', ',') : '');
+
+                        if(dataSet.regressionData.length > 0) {
+                             const regValue = dataSet.regressionData[index];
+                             row.push(regValue !== null && regValue !== undefined ? String(regValue).replace('.', ',') : '');
+                        }
+                    });
+                    return row.join(';');
+                });
+                
+                const csvContent = [headers.join(';'), ...rows].join('\n');
+                const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+                
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                const location = locationInput.value.trim();
+                link.setAttribute('download', `wetter-daten_${location}_${toYMD(new Date())}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            setDateDefaults();
+        });
+    </script>
+</body>
+</html>
