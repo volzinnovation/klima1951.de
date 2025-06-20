@@ -72,7 +72,7 @@
             }
             const buffer = await response.arrayBuffer();
             // We no longer need to pass the schema, as avsc reads it from the container file
-            parseAvroData(buffer); // Buffer.from(buffer)); // Use Buffer, which avsc prefers
+            parseAvroData(Buffer.from(buffer)); // Buffer.from(buffer)); // Use Buffer, which avsc prefers
           } catch (error) {
             console.error("Error loading file:", error);
             statusEl.textContent = `Error: ${error.message}. Please ensure '1951.avro' is in the same directory.`;

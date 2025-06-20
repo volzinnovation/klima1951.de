@@ -38,7 +38,7 @@
         const blob = await res.blob();
 
         // createBlobDecoder is the browser‐optimized entry point for Avro containers
-        const decoder = avsc.createBlobDecoder(blob);
+        const decoder = avsc.createBlobDecoder(Buffer.from(blob));
 
         const records = [];
         decoder.on('data', rec => records.push(rec));
