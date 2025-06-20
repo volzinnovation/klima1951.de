@@ -32,7 +32,7 @@
     btn.addEventListener('click', async () => {
       out.textContent = 'Fetching…';
 
-      try {
+      // try {
         const res = await fetch('1951.avro');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
@@ -48,9 +48,11 @@
         decoder.on('error', err => {
           out.textContent = `Decode error: ${err.message}`;
         });
+    /*
       } catch (err) {
         out.textContent = `Error: ${err.message}`;
       }
+        */
     });
   </script>
 </body>
