@@ -33,7 +33,7 @@
       out.textContent = 'Fetching…';
 
       try {
-        const res = await fetch('1951 (2).avro');
+        const res = await fetch('1951.avro');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
 
