@@ -13,12 +13,13 @@
 <body>
   <h1>Avro File Reader</h1>
   <p>
-    Click the button below to fetch and parse <code>1951 (2).avro</code> from this same directory.
+    Click the button below to fetch and parse <code>1951.avro</code> from this same directory.
   </p>
   <button id="loadBtn">Load and Parse Avro</button>
   <pre id="output">Waiting for action…</pre>
 
   <script>
+    const avro = window.avsc;
     document.getElementById('loadBtn').addEventListener('click', () => {
       const out = document.getElementById('output');
       out.textContent = 'Loading…';
