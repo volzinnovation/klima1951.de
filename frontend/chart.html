@@ -60,65 +60,57 @@
          * Fetches and processes the static Avro file on page load.
          */
         async function loadStaticAvroFile() {
-            const fileName = '1951.avro';
-            statusEl.textContent = `Loading data from ${fileName}...`;
-            try {
-                const response = await fetch(fileName);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status} - Could not find ${fileName}.`);
-                }
-                const buffer = await response.arrayBuffer();
-                parseAvroData(new Uint8Array(buffer));
-            } catch (error) {
-                console.error("Error loading file:", error);
-                statusEl.textContent = `Error: ${error.message}. Please ensure '1951.avro' is in the same directory.`;
-                statusEl.classList.add('text-red-500', 'dark:text-red-400');
+          const fileName = '1951.avro';
+          statusEl.textContent = `Loading data from ${fileName}...`;
+          try {
+            const response = await fetch(fileName);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status} - Could not find ${fileName}.`);
             }
+            const buffer = await response.arrayBuffer();
+            // We no longer need to pass the schema, as avsc reads it from the container file
+            parseAvroData(Buffer.from(buffer)); // Use Buffer, which avsc prefers
+          } catch (error) {
+            console.error("Error loading file:", error);
+            statusEl.textContent = `Error: ${error.message}. Please ensure '1951.avro' is in the same directory.`;
+            statusEl.classList.add('text-red-500', 'dark:text-red-400');
+          }
         }
 
-        /**
-         * Parses the Avro data from the buffer using the predefined schema.
-         * @param {Uint8Array} buffer - The file content as a byte array.
-         */
-        function parseAvroData(buffer) {
-            try {
-                // Explicitly parse the schema defined above
-                const type = avro.parse(schema);
-                const records = [];
-                // Create a decoder using the parsed schema type
-                const decoder = type.createDecoder(buffer);
-                
-                let record;
-                while ((record = decoder.decode())) {
-                    records.push(record);
-                }
-                
+        const records = [];
+        try {
+            // avsc's createFileDecoder is designed for Avro container files (like yours)
+            const decoder = avsc.createFileDecoder(buffer);
+            decoder.on('data', (record) => {
+                // This event fires for each record successfully decoded
+                records.push(record);
+            });
+            decoder.on('end', () => {
+                // This event fires when the entire file has been read
                 if (records.length === 0) {
-                    statusEl.textContent = 'Avro file was parsed, but it contains no records.';
+                    statusEl.textContent = 'Avro file was read, but it contains no records.';
                     return;
                 }
-
                 statusEl.textContent = `Successfully processed ${records.length} records. Rendering chart...`;
                 prepareChartData(records);
-
-            } catch (error) {
-                console.error('Avro parsing error:', error);
-                statusEl.textContent = `Failed to parse Avro file. Ensure it matches the schema. Error: ${error.message}`;
-                statusEl.classList.add('text-red-500', 'dark:text-red-400');
-            }
+            });
+        } catch (error) {
+            console.error('Avro parsing error:', error);
+            statusEl.textContent = `Failed to parse Avro file. The file may be corrupt. Error: ${error.message}`;
+            statusEl.classList.add('text-red-500', 'dark:text-red-400');
         }
+    }
 
-        /**
-         * Converts the Avro date (days since epoch) to a JavaScript Date object.
-         * @param {number} avroDate - The number of days since 1970-01-01.
-         * @returns {Date} The corresponding JavaScript Date object.
-         */
-        function convertAvroDate(avroDate) {
-            const epoch = new Date('1970-01-01T00:00:00Z');
-            epoch.setDate(epoch.getDate() + avroDate);
-            return epoch;
-        }
-
+    /**
+     * Converts the Avro date (days since epoch) to a JavaScript Date object.
+     * @param {number} avroDate - The number of days since 1970-01-01.
+     * @returns {Date} The corresponding JavaScript Date object.
+     */
+    function convertAvroDate(avroDate) {
+        const epoch = new Date('1970-01-01T00:00:00Z');
+        epoch.setDate(epoch.getDate() + avroDate);
+        return epoch;
+    }
         /**
          * Processes the decoded records and creates the chart.
          * @param {Array<Object>} records - The array of records from the Avro file.
