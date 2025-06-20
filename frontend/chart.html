@@ -24,7 +24,7 @@
         <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
             <div class="p-8">
                 <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Climate Data Visualizer</h1>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">Displaying climate data from <strong>1951.avro</strong> by automatically reading the schema from the file.</p>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Displaying climate data from <strong>1951.avro</strong> using a defined schema.</p>
 
                 <!-- Status and Chart Section -->
                 <div id="status" class="text-center p-4 text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
@@ -38,6 +38,20 @@
     </div>
 
     <script>
+        // --- Avro Schema Definition (as provided in the original Python script) ---
+        const schema = {
+            "type": "record",
+            "name": "ClimateData",
+            "fields": [
+                { "name": "time", "type": "int", "logicalType": "date" },
+                { "name": "hurs", "type": ["null", "float"] },
+                { "name": "pr", "type": ["null", "float"] },
+                { "name": "tas", "type": ["null", "float"] },
+                { "name": "tasmax", "type": ["null", "float"] },
+                { "name": "tasmin", "type": ["null", "float"] }
+            ]
+        };
+
         const statusEl = document.getElementById('status');
         const ctx = document.getElementById('climateChart').getContext('2d');
         let climateChart;
@@ -63,14 +77,16 @@
         }
 
         /**
-         * Parses the Avro data from the buffer, relying on the embedded schema.
+         * Parses the Avro data from the buffer using the predefined schema.
          * @param {Uint8Array} buffer - The file content as a byte array.
          */
         function parseAvroData(buffer) {
             try {
+                // Explicitly parse the schema defined above
+                const type = avro.parse(schema);
                 const records = [];
-                // The `createDecoder` method automatically reads the schema from the file buffer.
-                const decoder = avro.createDecoder(buffer);
+                // Create a decoder using the parsed schema type
+                const decoder = type.createDecoder(buffer);
                 
                 let record;
                 while ((record = decoder.decode())) {
@@ -87,7 +103,7 @@
 
             } catch (error) {
                 console.error('Avro parsing error:', error);
-                statusEl.textContent = `Failed to parse Avro file. The file might be corrupt or not a valid Avro container file.`;
+                statusEl.textContent = `Failed to parse Avro file. Ensure it matches the schema. Error: ${error.message}`;
                 statusEl.classList.add('text-red-500', 'dark:text-red-400');
             }
         }
@@ -104,11 +120,10 @@
         }
 
         /**
-         * Processes the decoded records and creates/updates the chart.
+         * Processes the decoded records and creates the chart.
          * @param {Array<Object>} records - The array of records from the Avro file.
          */
         function prepareChartData(records) {
-            // The field names ('time', 'tas', etc.) come from the schema inside the file.
             const labels = records.map(r => convertAvroDate(r.time));
             const tasData = records.map(r => r.tas);
             const tasminData = records.map(r => r.tasmin);
