@@ -61,6 +61,7 @@
          */
         async function loadStaticAvroFile() {
           const fileName = '1951.avro';
+
           statusEl.textContent = `Loading data from ${fileName}...`;
           try {
             const response = await fetch(fileName);
@@ -81,7 +82,7 @@
         const records = [];
         try {
             // avsc's createFileDecoder is designed for Avro container files (like yours)
-            const decoder = avsc.createFileDecoder(buffer);
+            const decoder = avro.createFileDecoder(buffer);
             decoder.on('data', (record) => {
                 // This event fires for each record successfully decoded
                 records.push(record);
