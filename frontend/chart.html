@@ -77,6 +77,7 @@
           }
         }
 
+      function parseAvroData(buffer) {
         const records = [];
         try {
             // avsc's createFileDecoder is designed for Avro container files (like yours)
@@ -100,6 +101,8 @@
             statusEl.classList.add('text-red-500', 'dark:text-red-400');
         }
     }
+
+  
 
     /**
      * Converts the Avro date (days since epoch) to a JavaScript Date object.
