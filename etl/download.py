@@ -30,11 +30,12 @@ def download(url):
         f.write(chunk)
     # print(f"Downloaded {filename}")
 
-urls = ["https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/air_temperature_max/",
-        "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/",
-        "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/humidity/",
+urls = [
         "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/air_temperature_min/",
         "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/air_temperature_mean/"]
+#        "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/air_temperature_max/",
+#        "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/precipitation/",
+#        "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/humidity/",]
 
 for url in urls:
   download(url)
