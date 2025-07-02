@@ -2,27 +2,27 @@
   "cities": [
     {
       "city": "Aachen",
-      "longitude": 608,
-      "latitude": 5077
+      "longitude": 607,
+      "latitude": 5076
     },
     {
       "city": "Augsburg",
-      "longitude": 1089,
-      "latitude": 4836
+      "longitude": 1088,
+      "latitude": 4835
     },
     {
       "city": "Bad Herrenalb",
-      "longitude": 843,
+      "longitude": 842,
       "latitude": 4879
     },
     {
       "city": "Baden-Baden",
-      "longitude": 823,
+      "longitude": 822,
       "latitude": 4876
     },
     {
       "city": "Berlin",
-      "longitude": 1340,
+      "longitude": 1339,
       "latitude": 5251
     },
     {
@@ -33,47 +33,47 @@
     {
       "city": "Bochum",
       "longitude": 721,
-      "latitude": 5148
+      "latitude": 5147
     },
     {
       "city": "Bonn",
-      "longitude": 709,
-      "latitude": 5073
+      "longitude": 708,
+      "latitude": 5072
     },
     {
       "city": "Braunschweig",
-      "longitude": 1052,
+      "longitude": 1051,
       "latitude": 5226
     },
     {
       "city": "Bremen",
-      "longitude": 880,
-      "latitude": 5307
+      "longitude": 879,
+      "latitude": 5306
     },
     {
       "city": "Chemnitz",
-      "longitude": 1292,
-      "latitude": 5083
+      "longitude": 1291,
+      "latitude": 5082
     },
     {
       "city": "Darmstadt",
-      "longitude": 865,
-      "latitude": 4987
+      "longitude": 864,
+      "latitude": 4986
     },
     {
       "city": "Dortmund",
-      "longitude": 746,
-      "latitude": 5151
+      "longitude": 745,
+      "latitude": 5150
     },
     {
       "city": "Dresden",
       "longitude": 1373,
-      "latitude": 5105
+      "latitude": 5104
     },
     {
       "city": "Duisburg",
-      "longitude": 676,
-      "latitude": 5143
+      "longitude": 675,
+      "latitude": 5142
     },
     {
       "city": "Düsseldorf",
@@ -82,8 +82,8 @@
     },
     {
       "city": "Erfurt",
-      "longitude": 1102,
-      "latitude": 5097
+      "longitude": 1101,
+      "latitude": 5096
     },
     {
       "city": "Essen",
@@ -92,12 +92,12 @@
     },
     {
       "city": "Frankfurt am Main",
-      "longitude": 868,
-      "latitude": 5011
+      "longitude": 867,
+      "latitude": 5010
     },
     {
       "city": "Freiburg im Breisgau",
-      "longitude": 784,
+      "longitude": 783,
       "latitude": 4799
     },
     {
@@ -108,11 +108,11 @@
     {
       "city": "Hagen",
       "longitude": 746,
-      "latitude": 5136
+      "latitude": 5135
     },
     {
       "city": "Halle (Saale)",
-      "longitude": 1197,
+      "longitude": 1196,
       "latitude": 5148
     },
     {
@@ -122,18 +122,18 @@
     },
     {
       "city": "Hamm",
-      "longitude": 781,
-      "latitude": 5167
+      "longitude": 780,
+      "latitude": 5166
     },
     {
       "city": "Hannover",
-      "longitude": 973,
+      "longitude": 972,
       "latitude": 5237
     },
     {
       "city": "Heidelberg",
-      "longitude": 870,
-      "latitude": 4941
+      "longitude": 869,
+      "latitude": 4940
     },
     {
       "city": "Herne",
@@ -143,22 +143,17 @@
     {
       "city": "Ingolstadt",
       "longitude": 1142,
-      "latitude": 4876
+      "latitude": 4875
     },
     {
       "city": "Karlsruhe",
-      "longitude": 840,
-      "latitude": 4900
+      "longitude": 839,
+      "latitude": 4899
     },
     {
       "city": "Kassel",
       "longitude": 949,
       "latitude": 5131
-    },
-    {
-      "city": "Kiel",
-      "longitude": 1013,
-      "latitude": 5432
     },
     {
       "city": "Krefeld",
@@ -167,7 +162,7 @@
     },
     {
       "city": "Köln",
-      "longitude": 695,
+      "longitude": 694,
       "latitude": 5093
     },
     {
@@ -177,43 +172,43 @@
     },
     {
       "city": "Leverkusen",
-      "longitude": 697,
+      "longitude": 696,
       "latitude": 5103
     },
     {
       "city": "Loffenau",
-      "longitude": 838,
+      "longitude": 837,
       "latitude": 4877
     },
     {
       "city": "Ludwigshafen am Rhein",
-      "longitude": 844,
-      "latitude": 4948
+      "longitude": 843,
+      "latitude": 4947
     },
     {
       "city": "Lübeck",
-      "longitude": 1068,
+      "longitude": 1067,
       "latitude": 5386
     },
     {
       "city": "Magdeburg",
-      "longitude": 1163,
-      "latitude": 5212
+      "longitude": 1162,
+      "latitude": 5211
     },
     {
       "city": "Mainz",
-      "longitude": 827,
-      "latitude": 5000
+      "longitude": 826,
+      "latitude": 4999
     },
     {
       "city": "Mannheim",
       "longitude": 846,
-      "latitude": 4948
+      "latitude": 4947
     },
     {
       "city": "Mönchengladbach",
-      "longitude": 643,
-      "latitude": 5119
+      "longitude": 642,
+      "latitude": 5118
     },
     {
       "city": "Mülheim an der Ruhr",
@@ -222,8 +217,8 @@
     },
     {
       "city": "München",
-      "longitude": 1157,
-      "latitude": 4813
+      "longitude": 1156,
+      "latitude": 4812
     },
     {
       "city": "Münster",
@@ -232,78 +227,78 @@
     },
     {
       "city": "Neuss",
-      "longitude": 669,
+      "longitude": 668,
       "latitude": 5119
     },
     {
       "city": "Nürnberg",
-      "longitude": 1107,
-      "latitude": 4945
+      "longitude": 1106,
+      "latitude": 4944
     },
     {
       "city": "Oberhausen",
       "longitude": 685,
-      "latitude": 5147
+      "latitude": 5146
     },
     {
-      "city": "Oldenburg (Oldb)",
+      "city": "Oldenburg",
       "longitude": 821,
       "latitude": 5314
     },
     {
       "city": "Osnabrück",
       "longitude": 804,
-      "latitude": 5227
+      "latitude": 5226
     },
     {
       "city": "Paderborn",
-      "longitude": 875,
+      "longitude": 874,
       "latitude": 5171
     },
     {
       "city": "Pforzheim",
-      "longitude": 869,
-      "latitude": 4889
+      "longitude": 868,
+      "latitude": 4888
     },
     {
       "city": "Potsdam",
-      "longitude": 1305,
-      "latitude": 5240
+      "longitude": 1304,
+      "latitude": 5239
     },
     {
       "city": "Regensburg",
-      "longitude": 1210,
-      "latitude": 4901
+      "longitude": 1209,
+      "latitude": 4900
     },
     {
       "city": "Rostock",
       "longitude": 1213,
-      "latitude": 5408
+      "latitude": 5407
     },
     {
       "city": "Saarbrücken",
-      "longitude": 699,
+      "longitude": 698,
       "latitude": 4923
     },
     {
       "city": "Solingen",
-      "longitude": 708,
-      "latitude": 5117
+      "longitude": 707,
+      "latitude": 5116
     },
     {
       "city": "Stuttgart",
-      "longitude": 917,
+      "longitude": 916,
       "latitude": 4877
     },
     {
       "city": "Wiesbaden",
       "longitude": 823,
-      "latitude": 5008
+      "latitude": 5007
     },
     {
       "city": "Wuppertal",
-      "longitude": 719,
-      "latitude": 5127
+      "longitude": 718,
+      "latitude": 5126
     }
   ]
 }
