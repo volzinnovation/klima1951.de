@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Data Visualizer</title>
+    <title>Das Wetter in Deutschland seit 1951</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns/"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -27,12 +28,12 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
 
-<div class="container mx-auto p-4 md:p-8">
+<div class="container mx-auto p-4 md:p-8 flex-grow">
     <header class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-900">Weather Data Visualizer</h1>
-        <p class="text-lg text-gray-600 mt-2">Explore historical weather data from 1951 to 2024</p>
+        <h1 class="text-4xl font-bold text-gray-900">Das Wetter in Deutschland seit 1951</h1>
+        <p class="text-lg text-gray-600 mt-2">Erkunden Sie historische Wetterdaten bis 2024</p>
     </header>
 
     <main>
@@ -41,30 +42,30 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- City Selection -->
                 <div>
-                    <label for="city-select" class="block text-sm font-medium text-gray-700 mb-2">Select a City:</label>
+                    <label for="city-select" class="block text-sm font-medium text-gray-700 mb-2">Stadt auswählen:</label>
                     <select id="city-select" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        <option>Loading cities...</option>
+                        <option>Lade Städte...</option>
                     </select>
                 </div>
 
                 <!-- Date Range Selection -->
                 <div>
-                    <label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">Start Date:</label>
+                    <label for="start-date" class="block text-sm font-medium text-gray-700 mb-2">Startdatum:</label>
                     <input type="date" id="start-date" min="1951-01-01" max="2024-12-31" value="2020-01-01" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
                 <div>
-                    <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">End Date:</label>
+                    <label for="end-date" class="block text-sm font-medium text-gray-700 mb-2">Enddatum:</label>
                     <input type="date" id="end-date" min="1951-01-01" max="2024-12-31" value="2020-12-31" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                 </div>
 
                 <!-- Aggregation Level -->
                 <div>
-                    <label for="aggregation-select" class="block text-sm font-medium text-gray-700 mb-2">Aggregate Data:</label>
+                    <label for="aggregation-select" class="block text-sm font-medium text-gray-700 mb-2">Daten aggregieren:</label>
                     <select id="aggregation-select" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
+                        <option value="daily">Täglich</option>
+                        <option value="weekly">Wöchentlich</option>
+                        <option value="monthly">Monatlich</option>
+                        <option value="yearly">Jährlich</option>
                     </select>
                 </div>
             </div>
@@ -72,16 +73,18 @@
             <!-- Measurement and Regression Toggles -->
             <div class="mt-6">
                 <div class="flex flex-wrap items-center gap-4">
-                    <p class="text-sm font-medium text-gray-700">Measurements:</p>
+                    <p class="text-sm font-medium text-gray-700">Messungen:</p>
                     <div id="measurement-toggles" class="flex flex-wrap gap-x-6 gap-y-2">
                         <!-- Checkboxes will be inserted here by JavaScript -->
                     </div>
                     <div class="flex items-center ml-auto">
                         <input id="regression-toggle" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
-                        <label for="regression-toggle" class="ml-2 block text-sm text-gray-900">Show Regression Line</label>
+                        <label for="regression-toggle" class="ml-2 block text-sm text-gray-900">Trendlinie anzeigen</label>
                     </div>
                 </div>
             </div>
+
+
         </div>
 
         <!-- Chart Section -->
@@ -90,14 +93,26 @@
                 <canvas id="weather-chart"></canvas>
                 <div id="loader" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center hidden">
                     <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
-                    <p class="ml-4 text-lg font-semibold text-gray-700">Loading data...</p>
+                    <p class="ml-4 text-lg font-semibold text-gray-700">Lade Daten...</p>
                 </div>
             </div>
             <div id="message-area" class="text-center text-red-500 mt-4 font-medium"></div>
+            <!-- Regression Info Section -->
+            <div id="regression-info" class="mt-4 text-sm text-gray-600"></div>
+        </div>
+
+        <!-- Download Buttons -->
+        <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg flex flex-wrap gap-4 justify-end">
+            <button id="download-csv" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition">CSV Herunterladen</button>
+            <button id="download-png" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition">PNG Herunterladen</button>
         </div>
     </main>
-
 </div>
+
+<footer class="text-center p-4 text-xs text-gray-500">
+    <p>Open Data: (c) <a target="_blank" class="text-blue-600 hover:underline"  href="https://www.dwd.de/DE/leistungen/hyras/hyras.html">DWD HYRAS</a>. Code: <a target="_blank" class="text-blue-600 hover:underline" href="https://github.com/volzinnovation/klima1951.de/">Open Source</a></p>
+    <p>(c) 2025 <a href="https://www.raphaelvolz.de/" target="_blank" class="text-blue-600 hover:underline">Prof. Dr. Raphael Volz</a> (<a href="https://www.hs-pforzheim.de/" target="_blank" class="text-blue-600 hover:underline">Hochschule Pforzheim</a>)</p>
+</footer>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -108,39 +123,41 @@
         const measurementTogglesContainer = document.getElementById('measurement-toggles');
         const aggregationSelect = document.getElementById('aggregation-select');
         const regressionToggle = document.getElementById('regression-toggle');
+        const regressionInfoContainer = document.getElementById('regression-info');
         const chartCanvas = document.getElementById('weather-chart');
         const loader = document.getElementById('loader');
         const messageArea = document.getElementById('message-area');
+        const downloadCsvBtn = document.getElementById('download-csv');
+        const downloadPngBtn = document.getElementById('download-png');
 
         let weatherChart;
         let allData = {};
         let citiesData = [];
 
-        // Configuration for weather measurements
+        // Configuration for weather measurements in German
         const measurementConfig = {
-            'tas': { label: 'Avg Temp (°C)', color: 'rgba(255, 99, 132, 1)', yAxisID: 'y' },
+            'tas': { label: 'Ø Temp (°C)', color: 'rgba(255, 99, 132, 1)', yAxisID: 'y' },
             'tasmax': { label: 'Max Temp (°C)', color: 'rgba(255, 0, 0, 1)', yAxisID: 'y' },
             'tasmin': { label: 'Min Temp (°C)', color: 'rgba(0, 0, 255, 1)', yAxisID: 'y' },
-            'pr': { label: 'Precipitation (mm)', color: 'rgba(54, 162, 235, 1)', yAxisID: 'y1' },
-            'hurs': { label: 'Humidity (%)', color: 'rgba(75, 192, 192, 1)', yAxisID: 'y1' }
+            'pr': { label: 'Niederschlag (mm)', color: 'rgba(54, 162, 235, 1)', yAxisID: 'y1' },
+            'hurs': { label: 'Feuchtigkeit (%)', color: 'rgba(75, 192, 192, 1)', yAxisID: 'y1' }
         };
 
         /**
          * Fetches data from a given URL.
          * @param {string} url - The URL to fetch data from.
-         * @returns {Promise<any>} A promise that resolves with the JSON data.
+         * @returns {Promise<any>} A promise that resolves with the JSON data or response object.
          */
         async function fetchData(url) {
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
-                    // Don't throw here, just return the response to be checked
                     return response;
                 }
                 return await response.json();
             } catch (error) {
-                console.error('Fetch error:', error);
-                messageArea.textContent = `Failed to fetch data from ${url}. Please check the console for details.`;
+                console.error('Fetch-Fehler:', error);
+                messageArea.textContent = `Daten konnten von ${url} nicht geladen werden.`;
                 return null;
             }
         }
@@ -161,19 +178,17 @@
                     citySelect.appendChild(option);
                 });
 
-                // Find the index for Berlin to set it as the default
                 const berlinIndex = citiesData.findIndex(city => city.city === "Berlin");
 
                 if (berlinIndex !== -1) {
                     citySelect.value = berlinIndex;
                     loadWeatherData(berlinIndex);
                 } else {
-                    // Fallback to the first city if Berlin is not found
                     loadWeatherData(0);
                 }
 
             } else {
-                citySelect.innerHTML = '<option>Could not load cities</option>';
+                citySelect.innerHTML = '<option>Städte konnten nicht geladen werden</option>';
             }
         }
 
@@ -183,19 +198,15 @@
          */
         async function loadWeatherData(cityIndex) {
             showLoader();
-            messageArea.textContent = ''; // Clear previous messages
+            messageArea.textContent = '';
             const city = citiesData[cityIndex];
             const baseLon = city.longitude;
             const baseLat = city.latitude;
 
-            // Define the order of attempts
             const attempts = [
-                { lon: baseLon, lat: baseLat },
-                { lon: baseLon + 1, lat: baseLat },
-                { lon: baseLon - 1, lat: baseLat },
-                { lon: baseLon, lat: baseLat + 1 },
-                { lon: baseLon, lat: baseLat - 1 },
-                { lon: baseLon + 1, lat: baseLat - 1 },
+                { lon: baseLon, lat: baseLat }, { lon: baseLon + 1, lat: baseLat },
+                { lon: baseLon - 1, lat: baseLat }, { lon: baseLon, lat: baseLat + 1 },
+                { lon: baseLon, lat: baseLat - 1 }, { lon: baseLon + 1, lat: baseLat - 1 },
             ];
 
             let data = null;
@@ -205,14 +216,14 @@
                 try {
                     const response = await fetch(dataUrl);
                     if (response.ok) {
-                        console.log(`Success: Fetched data for ${city.city} at lon=${attempt.lon}, lat=${attempt.lat}`);
+                        console.log(`Erfolg: Daten für ${city.city} geladen bei lon=${attempt.lon}, lat=${attempt.lat}`);
                         data = await response.json();
-                        break; // Exit loop on first success
+                        break;
                     } else {
-                        console.log(`Attempt failed for lon=${attempt.lon}, lat=${attempt.lat}. Status: ${response.status}`);
+                        console.log(`Versuch fehlgeschlagen für lon=${attempt.lon}, lat=${attempt.lat}. Status: ${response.status}`);
                     }
                 } catch (error) {
-                    console.error(`Error fetching from ${dataUrl}:`, error);
+                    console.error(`Fehler beim Laden von ${dataUrl}:`, error);
                 }
             }
 
@@ -220,9 +231,9 @@
                 allData = data;
                 updateChart();
             } else {
-                messageArea.textContent = `Could not find weather data for ${city.city} or nearby coordinates after 6 attempts.`;
-                allData = {}; // Clear old data
-                weatherChart.data.datasets = []; // Clear chart
+                messageArea.textContent = `Wetterdaten für ${city.city} oder nahegelegene Koordinaten konnten nicht gefunden werden.`;
+                allData = {};
+                weatherChart.data.datasets = [];
                 weatherChart.update();
             }
             hideLoader();
@@ -235,60 +246,23 @@
             const ctx = chartCanvas.getContext('2d');
             weatherChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    datasets: []
-                },
+                data: { datasets: [] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
+                    interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Date'
-                            }
-                        },
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'Temperature (°C)'
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'Precipitation / Humidity'
-                            },
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
+                        x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Datum' } },
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temperatur (°C)' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Niederschlag / Feuchtigkeit' }, grid: { drawOnChartArea: false } }
                     },
                     plugins: {
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += context.parsed.y.toFixed(2);
-                                    }
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) { label += context.parsed.y.toFixed(2); }
                                     return label;
                                 }
                             }
@@ -304,6 +278,7 @@
         function updateChart() {
             if (!allData.time || !weatherChart) return;
 
+            regressionInfoContainer.innerHTML = ''; // Clear regression info
             const startDate = new Date(startDateInput.value);
             const endDate = new Date(endDateInput.value);
             const aggregation = aggregationSelect.value;
@@ -341,16 +316,21 @@
                 });
 
                 if (showRegression && aggregatedData.length > 1) {
-                    const regressionData = calculateLinearRegression(aggregatedTime, aggregatedData);
+                    const { line, slope, intercept } = calculateLinearRegression(aggregatedTime, aggregatedData);
                     datasets.push({
                         label: `${measurementConfig[key].label} (Trend)`,
-                        data: regressionData,
+                        data: line,
                         borderColor: measurementConfig[key].color.replace('1)', '0.5)'),
                         borderDash: [5, 5],
                         yAxisID: measurementConfig[key].yAxisID,
                         pointRadius: 0,
                         fill: false,
                     });
+
+                    // Display regression parameters
+                    const infoP = document.createElement('p');
+                    infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend:</strong> Steigung = ${slope.toExponential(4)}, Achsenabschnitt = ${intercept.toFixed(4)}`;
+                    regressionInfoContainer.appendChild(infoP);
                 }
             });
 
@@ -367,11 +347,6 @@
 
         /**
          * Aggregates data based on the selected period and aggregation type.
-         * @param {Date[]} times - Array of date objects.
-         * @param {number[]} values - Array of measurement values.
-         * @param {string} period - Aggregation period ('daily', 'weekly', 'monthly', 'yearly').
-         * @param {string} aggregationType - Type of aggregation ('avg', 'sum', 'min', 'max').
-         * @returns {{aggregatedTime: Date[], aggregatedData: number[]}} The aggregated data.
          */
         function aggregateData(times, values, period, aggregationType = 'avg') {
             if (period === 'daily') {
@@ -410,19 +385,10 @@
             for (const key in aggregated) {
                 aggregatedTime.push(aggregated[key].time);
                 switch (aggregationType) {
-                    case 'sum':
-                        aggregatedData.push(aggregated[key].sum);
-                        break;
-                    case 'min':
-                        aggregatedData.push(aggregated[key].min);
-                        break;
-                    case 'max':
-                        aggregatedData.push(aggregated[key].max);
-                        break;
-                    case 'avg':
-                    default:
-                        aggregatedData.push(aggregated[key].sum / aggregated[key].count);
-                        break;
+                    case 'sum': aggregatedData.push(aggregated[key].sum); break;
+                    case 'min': aggregatedData.push(aggregated[key].min); break;
+                    case 'max': aggregatedData.push(aggregated[key].max); break;
+                    case 'avg': default: aggregatedData.push(aggregated[key].sum / aggregated[key].count); break;
                 }
             }
 
@@ -430,31 +396,27 @@
         }
 
         /**
-         * Calculates a simple linear regression.
-         * @param {Date[]} xValues - The x-values (dates).
-         * @param {number[]} yValues - The y-values (measurements).
-         * @returns {{x: Date, y: number}[]} The data points for the regression line.
+         * Calculates a simple linear regression and returns its parameters.
          */
         function calculateLinearRegression(xValues, yValues) {
             const n = xValues.length;
             let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-
             const numericX = xValues.map(d => d.getTime());
 
             for (let i = 0; i < n; i++) {
-                sumX += numericX[i];
-                sumY += yValues[i];
-                sumXY += numericX[i] * yValues[i];
-                sumXX += numericX[i] * numericX[i];
+                sumX += numericX[i]; sumY += yValues[i];
+                sumXY += numericX[i] * yValues[i]; sumXX += numericX[i] * numericX[i];
             }
 
             const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
             const intercept = (sumY - slope * sumX) / n;
 
-            return [
+            const line = [
                 { x: xValues[0], y: slope * numericX[0] + intercept },
                 { x: xValues[n - 1], y: slope * numericX[n - 1] + intercept }
             ];
+
+            return { line, slope, intercept };
         }
 
         /**
@@ -465,35 +427,111 @@
                 const div = document.createElement('div');
                 div.className = 'flex items-center';
                 const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `toggle-${key}`;
-                checkbox.value = key;
-                checkbox.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded';
+                checkbox.type = 'checkbox'; checkbox.id = `toggle-${key}`;
+                checkbox.value = key; checkbox.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded';
                 if (key === 'tas') checkbox.checked = true;
                 const label = document.createElement('label');
-                label.htmlFor = `toggle-${key}`;
-                label.textContent = measurementConfig[key].label;
+                label.htmlFor = `toggle-${key}`; label.textContent = measurementConfig[key].label;
                 label.className = 'ml-2 block text-sm text-gray-900';
-
-                div.appendChild(checkbox);
-                div.appendChild(label);
+                div.appendChild(checkbox); div.appendChild(label);
                 measurementTogglesContainer.appendChild(div);
             });
         }
 
         /**
-         * Shows the loading indicator.
+         * Downloads the current chart view as a PNG file.
          */
-        function showLoader() {
-            loader.classList.remove('hidden');
+        function downloadPNG() {
+            // Get dynamic title info
+            const selectedCity = citySelect.options[citySelect.selectedIndex].text;
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            const titleText = `Das Wetter in ${selectedCity} zwischen ${startDate} und ${endDate}`;
+
+            const footerLines = [
+                "(c) klima1951.de auf Basis der Hydrometeorologische Rasterdaten (HYRAS) des Deutschen Wetterdienstes (DWD)",
+                "Open Data & Open Source http://github.com/volzinnovation/klima1951.de/ erstellt von @volz_fw"
+            ];
+            const titleHeight = 40;
+            const footerHeight = 40;
+            const originalCanvas = weatherChart.canvas;
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
+            tempCanvas.width = originalCanvas.width;
+            tempCanvas.height = originalCanvas.height + titleHeight + footerHeight;
+
+            // Fill background
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Draw title
+            tempCtx.fillStyle = '#111827'; // gray-900
+            tempCtx.font = 'bold 16px Inter, sans-serif';
+            tempCtx.textAlign = 'center';
+            tempCtx.fillText(titleText, tempCanvas.width / 2, titleHeight / 2 + 8);
+
+            // Draw chart
+            tempCtx.drawImage(originalCanvas, 0, titleHeight);
+
+            // Draw footer text
+            tempCtx.fillStyle = '#6B7280'; // gray-500
+            tempCtx.font = '10px Inter, sans-serif';
+            tempCtx.textAlign = 'center';
+
+            tempCtx.fillText(footerLines[0], tempCanvas.width / 2, tempCanvas.height - 20);
+            tempCtx.fillText(footerLines[1], tempCanvas.width / 2, tempCanvas.height - 8);
+
+            const link = document.createElement('a');
+            link.href = tempCanvas.toDataURL('image/png');
+            link.download = 'wetter-diagramm.png';
+            link.click();
         }
 
         /**
-         * Hides the loading indicator.
+         * Downloads the current chart data as a CSV file.
          */
-        function hideLoader() {
-            loader.classList.add('hidden');
+        function downloadCSV() {
+            if (!weatherChart || !weatherChart.data.datasets.length) {
+                alert("Keine Daten zum Herunterladen vorhanden.");
+                return;
+            }
+
+            const dataByDate = {};
+            const headers = ['Datum'];
+            const activeDatasets = weatherChart.data.datasets.filter(ds => !ds.label.includes('(Trend)'));
+
+            activeDatasets.forEach(ds => {
+                headers.push(ds.label);
+                ds.data.forEach(point => {
+                    const dateString = new Date(point.x).toISOString().split('T')[0];
+                    if (!dataByDate[dateString]) {
+                        dataByDate[dateString] = {};
+                    }
+                    dataByDate[dateString][ds.label] = point.y.toFixed(4);
+                });
+            });
+
+            let csvContent = headers.join(',') + '\n';
+
+            Object.keys(dataByDate).sort().forEach(date => {
+                const row = [date];
+                headers.slice(1).forEach(header => {
+                    row.push(dataByDate[date][header] || '');
+                });
+                csvContent += row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'wetter-daten.csv');
+            link.click();
         }
+
+        function showLoader() { loader.classList.remove('hidden'); }
+        function hideLoader() { loader.classList.add('hidden'); }
 
         // Event Listeners
         citySelect.addEventListener('change', (e) => loadWeatherData(e.target.value));
@@ -502,6 +540,8 @@
         aggregationSelect.addEventListener('change', updateChart);
         regressionToggle.addEventListener('change', updateChart);
         measurementTogglesContainer.addEventListener('change', updateChart);
+        downloadCsvBtn.addEventListener('click', downloadCSV);
+        downloadPngBtn.addEventListener('click', downloadPNG);
 
         // Initial setup
         createMeasurementToggles();
