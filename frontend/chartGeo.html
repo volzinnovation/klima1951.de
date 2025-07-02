@@ -14,9 +14,10 @@
 <script>
   // Build data path dynamically from user's geolocation
   function loadChartFromPosition(position) {
-    const lonInt = Math.round(position.coords.longitude * 100);
-    const latInt = Math.round(position.coords.latitude * 100);
-    const dataPath = `../data/json/${lonInt}/${latInt}/all1951-2024.json`;
+    const lonInt =   843 // Math.round(position.coords.longitude * 100);
+    const latInt = 4879 // Math.round(position.coords.latitude * 100);
+
+    const dataPath = "https://raw.githubusercontent.com/volzinnovation/klima1951.de/refs/heads/main/data/json/1051/5226/all1951-2024.json" // `../data/json/${lonInt}/${latInt}/all1951-2024.json`;
     console.log('Fetching data from:', dataPath);
 
     fetch(dataPath)
