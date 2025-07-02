@@ -1,1 +1,8 @@
-{}
+{
+  "Heizperiode": 271,
+  "Eistage": 0,
+  "Frosttage": 28,
+  "Hitzetage": 15,
+  "Tropennacht": 2,
+  "Vegetationsperiode": 300
+}

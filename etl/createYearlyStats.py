@@ -61,5 +61,5 @@ if os.path.isdir(base_dir):
                                             print(f"An error occurred while processing file {filepath}: {e}")
                             output_filepath = os.path.join(year_dir, "stats.json")
                             with open(output_filepath, 'w') as outfile:
-                                json.dump(all_data, outfile, indent=2)  # Dump the dictionary
+                                json.dump(stats, outfile, indent=2)  # Dump the dictionary
                                 print(f"Created {output_filepath}")

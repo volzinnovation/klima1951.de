@@ -1,1 +1,11 @@
-{}
+{
+  "Heizperiode": 238,
+  "Eistage": 18,
+  "Frosttage": 48,
+  "Hitzetage": 11,
+  "Tropennacht": 0,
+  "Vegetationsperiode": 280,
+  "LetzterFrostFr\u00fchjahr": 111,
+  "ErsterFrostHerbst": 294,
+  "FrostFreiePeriode": 183
+}
