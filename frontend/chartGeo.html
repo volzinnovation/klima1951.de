@@ -16,7 +16,7 @@
   function loadChartFromPosition(position) {
     const lonInt = Math.round(position.coords.longitude * 100);
     const latInt = Math.round(position.coords.latitude * 100);
-    const dataPath = `../data/json/${lonInt}/${latInt}/1951/tas.json`;
+    const dataPath = `../data/json/${lonInt}/${latInt}/all1951-2024.json`;
     console.log('Fetching data from:', dataPath);
 
     fetch(dataPath)
