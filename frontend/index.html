@@ -107,7 +107,7 @@
             <button id="download-png" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition">PNG Herunterladen</button>
         </div>
     </main>
-</div>
+</div>x
 
 <footer class="text-center p-4 text-xs text-gray-500">
     <p>Open Data: (c) <a target="_blank" class="text-blue-600 hover:underline"  href="https://www.dwd.de/DE/leistungen/hyras/hyras.html">DWD HYRAS</a>. Code: <a target="_blank" class="text-blue-600 hover:underline" href="https://github.com/volzinnovation/klima1951.de/">Open Source</a></p>
@@ -329,7 +329,7 @@
 
                     // Display regression parameters
                     const infoP = document.createElement('p');
-                    infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend:</strong> Steigung = ${slope.toExponential(4)}, Achsenabschnitt = ${intercept.toFixed(4)}`;
+                    infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend:</strong> Änderung = ${(slope*31556952).toExponential(4)} pro Jahr zum Basisjahr 1951 mit Wert ${intercept−19*(slope*31556952)} `;
                     regressionInfoContainer.appendChild(infoP);
                 }
             });
