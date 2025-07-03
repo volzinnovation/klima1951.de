@@ -23,6 +23,7 @@ if os.path.isdir(base_dir):
               "Frosttage",
               "Hitzetage",
               "Tropennacht",
+              "Niederschlagtage",
               "Vegetationsperiode",
               "LetzterFrostFruehjahr",
               "ErsterFrostHerbst",
@@ -44,6 +45,7 @@ if os.path.isdir(base_dir):
                           "Frosttage": data.get("Frosttage"),
                           "Hitzetage": data.get("Hitzetage"),
                           "Tropennacht": data.get("Tropennacht"),
+                          "Niederschlagtage" : data.get("Niederschlagtage"),
                           "Vegetationsperiode": data.get("Vegetationsperiode"),
                           "LetzterFrostFruehjahr": data.get("LetzterFrostFrühjahr"), # Note the key difference
                           "ErsterFrostHerbst": data.get("ErsterFrostHerbst"),

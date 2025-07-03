@@ -32,6 +32,7 @@ if os.path.isdir(base_dir):
                                             stats['Eistage'] = len(df[df['tasmax'] < 0])
                                             stats['Frosttage'] = len(df[df['tasmin'] < 0])
                                             stats['Hitzetage'] = len(df[df['tasmax'] >= 30])
+                                            stats['Niederschlagtage'] = len(df[df['pr'] >= 0.1])
                                             stats['Tropennacht'] = len(df[df['tasmin'] >= 20])
                                             stats['Vegetationsperiode'] = len(df[df['tas'] > 5])
                                             num_rows = len(df)
