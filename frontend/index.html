@@ -103,11 +103,12 @@
 
         <!-- Download Buttons -->
         <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg flex flex-wrap gap-4 justify-end">
+            <a id="stats-link" href="#" class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition">Wetter Statistik</a>
             <button id="download-csv" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition">CSV Herunterladen</button>
             <button id="download-png" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition">PNG Herunterladen</button>
         </div>
     </main>
-</div>x
+</div>
 
 <footer class="text-center p-4 text-xs text-gray-500">
     <p>Open Data: (c) <a target="_blank" class="text-blue-600 hover:underline"  href="https://www.dwd.de/DE/leistungen/hyras/hyras.html">DWD HYRAS</a>. Code: <a target="_blank" class="text-blue-600 hover:underline" href="https://github.com/volzinnovation/klima1951.de/">Open Source</a></p>
@@ -129,6 +130,7 @@
         const messageArea = document.getElementById('message-area');
         const downloadCsvBtn = document.getElementById('download-csv');
         const downloadPngBtn = document.getElementById('download-png');
+        const statsLink = document.getElementById('stats-link'); // New button reference
 
         let weatherChart;
         let allData = {};
@@ -218,6 +220,8 @@
                     if (response.ok) {
                         console.log(`Erfolg: Daten für ${city.city} geladen bei lon=${attempt.lon}, lat=${attempt.lat}`);
                         data = await response.json();
+                        // Update the stats link with the successful coordinates and city name
+                        statsLink.href = `stats.html?lon=${attempt.lon}&lat=${attempt.lat}&city=${encodeURIComponent(city.city)}`;
                         break;
                     } else {
                         console.log(`Versuch fehlgeschlagen für lon=${attempt.lon}, lat=${attempt.lat}. Status: ${response.status}`);
@@ -233,8 +237,13 @@
             } else {
                 messageArea.textContent = `Wetterdaten für ${city.city} oder nahegelegene Koordinaten konnten nicht gefunden werden.`;
                 allData = {};
-                weatherChart.data.datasets = [];
-                weatherChart.update();
+                if (weatherChart) {
+                    weatherChart.data.datasets = [];
+                    weatherChart.update();
+                }
+                // Disable stats link if no data is found
+                statsLink.href = '#';
+                statsLink.classList.add('opacity-50', 'cursor-not-allowed');
             }
             hideLoader();
         }
@@ -277,6 +286,9 @@
          */
         function updateChart() {
             if (!allData.time || !weatherChart) return;
+
+            // Enable stats link
+            statsLink.classList.remove('opacity-50', 'cursor-not-allowed');
 
             regressionInfoContainer.innerHTML = ''; // Clear regression info
             const startDate = new Date(startDateInput.value);
