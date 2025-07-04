@@ -64,6 +64,16 @@
 </div>
 
 <script>
+    function dayNumberToDate(dayNumber, year = new Date().getFullYear()) {
+        const date = new Date(year, 0); // January 1st of the given year
+        date.setDate(dayNumber);
+
+        const day = date.getDate();
+        const month = date.toLocaleString('default', { month: 'long' }); // e.g., 'February'
+
+        return day + ". " + month + " " ;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         // DOM element references
         const cityNameEl = document.getElementById('city-name');
@@ -186,7 +196,7 @@
                         const categoryInfo = categoryMap[header] || { name: header, description: '' };
 
                         // Create and append the table row with formatted numbers
-                        const tableRow = `
+                        let tableRow = `
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         ${categoryInfo.name}
@@ -197,6 +207,19 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${max.toLocaleString('de-DE')} (${maxYear})</td>
                                 </tr>
                             `;
+                        if(header=='LetzterFrostFruehjahr' || header=='ErsterFrostHerbst') {
+                            tableRow = `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        ${categoryInfo.name}
+                                        <p class="text-xs text-gray-500">${categoryInfo.description}</p>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${dayNumberToDate(Math.round(average))}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${dayNumberToDate(Math.round(min)) + minYear}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${dayNumberToDate(Math.round(max)) + maxYear}</td>
+                                </tr>
+                            `;
+                        }
                         tableBody.innerHTML += tableRow;
                     }
                 });
