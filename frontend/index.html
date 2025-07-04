@@ -341,9 +341,8 @@
 
                     // Display regression parameters
                     const infoP = document.createElement('p');
-                    const adjSlope = slope*31556952; //
-                    const adjIntercept = -19*adjSlope + intercept;
-                    infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend</strong>` // : Änderung = ${adjSlope.toFixed(6)} pro Jahr zum Basisjahr 1951 mit Wert ${adjIntercept.toFixed(4)} `;
+                    const delta = line[1].y - line[0].y
+                    infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend</strong> : von ${(line[0].y).toFixed(2)} nach ${(line[1].y).toFixed(2)} (Differenz ${delta.toFixed(2)})`;
                     regressionInfoContainer.appendChild(infoP);
                 }
             });
