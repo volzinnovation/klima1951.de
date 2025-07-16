@@ -23,7 +23,7 @@ jobs:
         run: ls -lah
         
       - name: Run downloadCurrentYear.py from data/hyras
-        working-directory: data/hyras
+        working-directory: ./data/hyras
         run: python ../../etl/downloadCurrentYear.py
 
       - name: Run createCurrentYear.py from data
