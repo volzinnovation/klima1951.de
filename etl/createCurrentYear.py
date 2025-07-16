@@ -88,7 +88,7 @@ for var_name in measures :
       #print(type(values))
       lat_int = int(ds1['lat'].values*precision)
       lon_int = int(ds1['lon'].values*precision)
-      output_dir = f'{output_base}/{lon_int}/{lat_int}/{year}'
+      output_dir = f'{output_base}/{row["longitude"]}/{row["latitude"]}/{year}'
       os.makedirs(output_dir, exist_ok=True)
       output_path = os.path.join(output_dir, f'{var_name}.json')
       print(output_path)
