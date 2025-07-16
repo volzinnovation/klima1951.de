@@ -41,6 +41,8 @@ jobs:
           python ../etl/mergeAllPerPlaceCurrentYearJSONpy.py
 
       - name: Commit and push changes
+        env:
+          PAT_TOKEN: ${{ secrets.DAILY_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
