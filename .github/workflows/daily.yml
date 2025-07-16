@@ -19,7 +19,7 @@ jobs:
           python-version: 3.9
           
       - name: List Directories
-        working-directory: .
+        working-directory: ./data/hyras
         run: ls -lah
         
       - name: Run downloadCurrentYear.py from data/hyras
