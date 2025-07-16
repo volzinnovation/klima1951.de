@@ -18,9 +18,10 @@ jobs:
         with:
           python-version: 3.9
           
-      - name: List Directories
+      - name: Make Directories
         run: |
-          cd data/hyras 
+          cd data
+          mkdir hyras 
           ls -lah
         
       - name: Run downloadCurrentYear.py from data/hyras
