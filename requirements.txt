@@ -1,0 +1,6 @@
+# Required Python libraries for klima1951.de ETL scripts
+xarray
+pandas
+tqdm
+requests
+beautifulsoup4

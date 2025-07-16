@@ -18,6 +18,10 @@ jobs:
         with:
           python-version: 3.9
           
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
       - name: Make Directories
         run: |
           cd data
