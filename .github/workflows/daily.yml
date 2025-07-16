@@ -1,0 +1,38 @@
+name: Daily Data Processing
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # Executes at 12:00 (noon) German time (UTC+2 in summer, UTC+1 in winter)
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  run-etl-scripts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Run downloadCurrentYear.py from data/hyras
+        working-directory: data/hyras
+        run: python ../../etl/downloadCurrentYear.py
+
+      - name: Run createCurrentYear.py from data
+        working-directory: data
+        run: |
+          python ../etl/createCurrentYear.py
+          python ../etl/mergeAllCurrentYearJSON.py
+          python ../etl/mergeAllPerPlaceCurrentYearJSONpy.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Daily ETL update" || echo "No changes to commit"
+          git push
