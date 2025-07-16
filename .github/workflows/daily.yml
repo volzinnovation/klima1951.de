@@ -19,16 +19,18 @@ jobs:
           python-version: 3.9
           
       - name: List Directories
-        working-directory: data/hyras
-        run: ls -lah
+        run: |
+          cd data/hyras 
+          ls -lah
         
       - name: Run downloadCurrentYear.py from data/hyras
-        working-directory: data/hyras
-        run: python ../../etl/downloadCurrentYear.py
+        run: |
+          cd data/hyras
+          python ../../etl/downloadCurrentYear.py
 
       - name: Run createCurrentYear.py from data
-        working-directory: data
         run: |
+          cd data
           python ../etl/createCurrentYear.py
           python ../etl/mergeAllCurrentYearJSON.py
           python ../etl/mergeAllPerPlaceCurrentYearJSONpy.py
