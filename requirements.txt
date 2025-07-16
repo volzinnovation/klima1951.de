@@ -4,3 +4,4 @@ pandas
 tqdm
 requests
 beautifulsoup4
+netCDF4
