@@ -13,7 +13,7 @@ Die Ortsauswahl wird über [misc/cities.json](https://github.com/volzinnovation/
 
 Das Verzeichnis frontend wird auf [https://klima1951.de/](https://klima1951.de/) gehostet.
 
-Die Daten werden täglich aktualisiert, dies erledigt der Workflow daily.yml.
+Die Daten werden täglich aktualisiert, dies erledigt der Workflow [daily.yml](https://github.com/volzinnovation/klima1951.de/blob/main/.github/workflows/daily.yml).
 
 --
 
