@@ -91,7 +91,9 @@ for var_name in measures :
       output_dir = f'{output_base}/{row["longitude"]}/{row["latitude"]}/{year}'
       os.makedirs(output_dir, exist_ok=True)
       output_path = os.path.join(output_dir, f'{var_name}.json')
-      print(output_path)
+      # print(output_path)
+      if os.path.exists(output_path):
+          os.remove(output_file_path)
       if not os.path.exists(output_path):
         with open(output_path, "w") as f:
           json.dump(d, f, indent=2)
