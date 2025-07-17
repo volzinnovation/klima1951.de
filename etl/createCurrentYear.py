@@ -93,7 +93,7 @@ for var_name in measures :
       output_path = os.path.join(output_dir, f'{var_name}.json')
       # print(output_path)
       if os.path.exists(output_path):
-          os.remove(output_file_path)
+          os.remove(output_path)
       if not os.path.exists(output_path):
         with open(output_path, "w") as f:
           json.dump(d, f, indent=2)
