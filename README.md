@@ -1,4 +1,4 @@
-# klima1915.de - Open Source Browser für DWD HYRAS Daten
+# klima1915.de - Web-Frontend für DWD HYRAS Wetterdaten
 
 Der Deutsche Wetterdienst (DWD) veröffentlicht [HYRAS-Datensätze – hydrometeorologische Rasterdaten](https://www.dwd.de/DE/leistungen/hyras/hyras.html), die folgende Messwerte tagesgenau enthalten:
 
