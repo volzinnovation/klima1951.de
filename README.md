@@ -1,12 +1,12 @@
 # klima1915.de - Open Source Browser für DWD HYRAS Daten
 
-Der Deutsche Wetterdienst (DWD) stellt [HYRAS-Datensätze bereit – hydrometeorologische Rasterdaten](https://www.dwd.de/DE/leistungen/hyras/hyras.html), die u.a. folgende Werte tagesgenau enthalten:
+Der Deutsche Wetterdienst (DWD) stellt [HYRAS-Datensätze bereit – hydrometeorologische Rasterdaten](https://www.dwd.de/DE/leistungen/hyras/hyras.html), die folgende Messwerte tagesgenau enthalten:
 
 - Temperatur (Minimum, Maximum, Mittelwert)
 - Niederschlag
 - Luftfeuchte
 
-Diese Werte gibt es für jeden Tag seit dem 1. Januar 1951, flächendeckend für ganz Deutschland.
+Diese Werte gibt es für jeden Tag seit dem **1. Januar 1951**, *flächendeckend für ganz Deutschland*.
 
 Die HYRAS-Daten liegen im Format NetCDF-4 vor. Die Python Programme im Verzeichnis [etl](https://github.com/volzinnovation/klima1951.de/tree/main/etl) transformieren diese Daten in Orts-bezogene JSON Dateien.
 Die Ortsauswahl wird über [misc/cities.json](https://github.com/volzinnovation/klima1951.de/blob/main/misc/cities.json) gesteuert, diese kann über eine Excel-Tabelle der deutschen Städte und Gemeinden und deren Koordinaten und Einwohnerzahl neu generiert werden.
