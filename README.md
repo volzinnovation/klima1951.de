@@ -15,6 +15,8 @@ Das Verzeichnis frontend wird auf [https://klima1951.de/](https://klima1951.de/)
 
 Die Daten werden täglich aktualisiert, dies erledigt der Workflow [daily.yml](https://github.com/volzinnovation/klima1951.de/blob/main/.github/workflows/daily.yml).
 
+[Mehr zur Motivation auf meinem Blog.](https://www.volz-fw.de/p/es-ist-sommer)
+
 --
 
 Vibe Coded im Juni/Juli 2025
