@@ -110,14 +110,14 @@ def main():
             lat_path = os.path.join(lon_path, lat_dir)
             if not os.path.isdir(lat_path): continue
 
-            available_years = [d for d in os.listdir(lat_path) if os.path.isdir(os.path.join(lat_path, d)) and d.isdigit()]
+            available_years = sorted([d for d in os.listdir(lat_path) if os.path.isdir(os.path.join(lat_path, d)) and d.isdigit()])
             
             years_to_process = []
             if args.years == 'all':
                 years_to_process = available_years
             elif args.years == 'full':
                 years_to_process = available_years[:-1]
-                print(f"Processing full years: {years_to_process}")
+                #print(f"Processing full years: {years_to_process}")
             elif args.years == 'current':
                 current_year_str = str(datetime.datetime.now().year)
                 if current_year_str in available_years:
