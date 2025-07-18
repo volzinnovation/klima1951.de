@@ -86,8 +86,8 @@ def main():
     parser.add_argument(
         '--years',
         type=str,
-        default='all',
-        help="'all' for all available years, 'current' for the current year, or a specific year (e.g., '2023')."
+        default='full',
+        help="'all' for all available years, 'full' for all full years'current' for the current year, or a specific year (e.g., '2023')."
     )
     parser.add_argument(
         '--overwrite',
@@ -115,6 +115,8 @@ def main():
             years_to_process = []
             if args.years == 'all':
                 years_to_process = available_years
+            elif args.years == 'full':
+                years_to_process = available_years[:-1]
             elif args.years == 'current':
                 current_year_str = str(datetime.datetime.now().year)
                 if current_year_str in available_years:

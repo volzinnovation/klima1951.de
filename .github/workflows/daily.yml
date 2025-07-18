@@ -44,7 +44,7 @@ jobs:
           python ../etl/merge_place_data.py --overwrite
 
           # Step 5: Recalculate all statistics
-          python ../etl/create_stats.py --years all --overwrite
+          python ../etl/create_stats.py --years full --overwrite
         working-directory: data
 
       - name: Commit and push changes

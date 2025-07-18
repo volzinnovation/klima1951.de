@@ -97,9 +97,13 @@ Finally, use `create_stats.py` to calculate yearly statistics from the `all.json
     ```bash
     python create_stats.py --years 2023
     ```
--   **To calculate for all years (default):**
+-   **To calculate for all years:**
     ```bash
     python create_stats.py --years all
+    ```
+-   **To calculate for all past years (default):**
+    ```bash
+    python create_stats.py --years full
     ```
 -   **To overwrite existing `stats.csv` files (optional):**
     ```bash
