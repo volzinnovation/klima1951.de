@@ -23,23 +23,27 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Make Directories
+      - name: Create data directories
         run: |
-          cd data
-          mkdir hyras 
-          ls -lah
-        
-      - name: Run downloadCurrentYear.py from data/hyras
-        run: |
-          cd data/hyras
-          python ../../etl/downloadCurrentYear.py
+          mkdir -p data/hyras
 
-      - name: Run createCurrentYear.py from data
+      - name: Run ETL Pipeline for Current Year
         run: |
-          cd data
-          python ../etl/createCurrentYear.py
-          python ../etl/mergeAllCurrentYearJSON.py
-          python ../etl/mergeAllPerPlaceCurrentYearJSONpy.py
+          # Step 1: Download data for the current year
+          python etl/download_data.py --year current
+
+          # Step 2: Create daily JSON files from the downloaded data
+          python etl/create_daily_json.py --years current --overwrite
+
+          # Step 3: Merge the individual JSON files into all.json for the current year
+          python etl/merge_yearly_json.py --years current
+
+          # Step 4: Re-aggregate all years of data for each place, including the new data
+          python etl/merge_place_data.py --overwrite
+
+          # Step 5: Recalculate all statistics
+          python etl/create_stats.py --years all --overwrite
+        working-directory: data
 
       - name: Commit and push changes
         env:
