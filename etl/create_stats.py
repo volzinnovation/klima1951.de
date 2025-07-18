@@ -117,6 +117,7 @@ def main():
                 years_to_process = available_years
             elif args.years == 'full':
                 years_to_process = available_years[:-1]
+                print(f"Processing full years: {years_to_process}")
             elif args.years == 'current':
                 current_year_str = str(datetime.datetime.now().year)
                 if current_year_str in available_years:

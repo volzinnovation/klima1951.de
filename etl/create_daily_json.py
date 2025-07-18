@@ -60,10 +60,7 @@ def process_file(var_name, year, cities_df, overwrite=False):
             var_name: ds1[var_name].values.tolist()
         }
 
-        lat_int = int(ds1['lat'].values * PRECISION)
-        lon_int = int(ds1['lon'].values * PRECISION)
-
-        output_dir = f'{OUTPUT_BASE}/{lon_int}/{lat_int}/{year}'
+        output_dir = f'{OUTPUT_BASE}/{target_lon}/{target_lat}/{year}'
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f'{var_name}.json')
 
