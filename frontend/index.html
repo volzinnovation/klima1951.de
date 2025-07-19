@@ -86,6 +86,7 @@
 
         <!-- Download Buttons -->
         <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg flex flex-wrap gap-4 justify-end">
+            <a id="heute-vor-link" href="#" class="px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-75 transition">Heute vor...</a>
             <a id="stats-link" href="#" class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition">Klimastatistik</a>
             <button id="download-csv" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition">CSV Herunterladen</button>
             <button id="download-png" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition">PNG Herunterladen</button>
@@ -114,6 +115,7 @@
         const downloadCsvBtn = document.getElementById('download-csv');
         const downloadPngBtn = document.getElementById('download-png');
         const statsLink = document.getElementById('stats-link'); // New button reference
+        const heuteVorLink = document.getElementById('heute-vor-link'); // Heute vor button reference
 
         let weatherChart;
         let allData = {};
@@ -205,6 +207,8 @@
                         data = await response.json();
                         // Update the stats link with the successful coordinates and city name
                         statsLink.href = `stats.html?lon=${attempt.lon}&lat=${attempt.lat}&city=${encodeURIComponent(city.city)}`;
+                        // Update the heute vor link with the successful coordinates and city name
+                        heuteVorLink.href = `heutevor.html?lon=${attempt.lon}&lat=${attempt.lat}&city=${encodeURIComponent(city.city)}`;
                         break;
                     } else {
                         console.log(`Versuch fehlgeschlagen für lon=${attempt.lon}, lat=${attempt.lat}. Status: ${response.status}`);
@@ -227,6 +231,9 @@
                 // Disable stats link if no data is found
                 statsLink.href = '#';
                 statsLink.classList.add('opacity-50', 'cursor-not-allowed');
+                // Disable heute vor link if no data is found
+                heuteVorLink.href = '#';
+                heuteVorLink.classList.add('opacity-50', 'cursor-not-allowed');
             }
             hideLoader();
         }
@@ -272,6 +279,8 @@
 
             // Enable stats link
             statsLink.classList.remove('opacity-50', 'cursor-not-allowed');
+            // Enable heute vor link
+            heuteVorLink.classList.remove('opacity-50', 'cursor-not-allowed');
 
             regressionInfoContainer.innerHTML = ''; // Clear regression info
             const startDate = new Date(startDateInput.value);
