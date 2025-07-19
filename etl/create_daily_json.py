@@ -60,7 +60,7 @@ def process_file(var_name, year, cities_df, overwrite=False):
             var_name: ds1[var_name].values.tolist()
         }
 
-        output_dir = f'{OUTPUT_BASE}/{target_lon}/{target_lat}/{year}'
+        output_dir = f'{OUTPUT_BASE}/{row['longitude']}/{row['latitude']}/{year}'
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f'{var_name}.json')
 
