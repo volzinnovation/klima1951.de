@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dein Geburtstagswetter - Historische Wetterdaten</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns/"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+
+<div class="container mx-auto p-4 md:p-8 flex-grow">
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900">Dein Geburtstagswetter in <span id="city-name">...</span></h1>
+        <p class="text-lg text-gray-600 mt-2">Das Wetter an deinem Geburtstag am <span id="current-date">...</span> seit deiner Geburt</p>
+    </header>
+
+    <main>
+        <!-- Controls Section -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Date Selection -->
+                <div>
+                    <label for="target-date" class="block text-sm font-medium text-gray-700 mb-2">Dein Geburtstag:</label>
+                    <input type="date" id="target-date" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                </div>
+
+
+            </div>
+
+            <!-- Measurement and Regression Toggles -->
+            <div class="mt-6">
+                <div class="flex flex-wrap items-center gap-4">
+                    <p class="text-sm font-medium text-gray-700">Messungen:</p>
+                    <div id="measurement-toggles" class="flex flex-wrap gap-x-6 gap-y-2">
+                        <!-- Checkboxes will be inserted here by JavaScript -->
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loader" class="flex items-center justify-center py-16 hidden">
+            <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+            <p class="ml-4 text-lg font-semibold text-gray-700">Lade historische Daten...</p>
+        </div>
+
+        <!-- Message Area -->
+        <div id="message-area" class="text-center text-red-500 mt-4 font-medium text-lg"></div>
+
+        <!-- Chart Section -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <div id="chart-container" class="relative h-[65vh]">
+                <canvas id="weather-chart"></canvas>
+            </div>
+
+        </div>
+
+        <!-- Download Buttons -->
+        <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg flex flex-wrap gap-4 justify-end">
+            <button id="download-csv" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition">CSV Herunterladen</button>
+            <button id="download-png" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition">PNG Herunterladen</button>
+        </div>
+    </main>
+</div>
+
+<footer class="text-center mt-8 py-4 flex flex-wrap justify-center items-center gap-4">
+    <a href="index.html" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 transition">Zurück zum Hauptdiagramm</a>
+</footer>
+<footer class="text-center p-4 text-xs text-gray-500">
+    <p>Open Data: (c) <a target="_blank" class="text-blue-600 hover:underline" href="https://www.dwd.de/DE/leistungen/hyras/hyras.html">DWD HYRAS</a>. Code: <a target="_blank" class="text-blue-600 hover:underline" href="https://github.com/volzinnovation/klima1951.de/">Open Source</a></p>
+    <p>(c) 2025 <a href="https://www.raphaelvolz.de/" target="_blank" class="text-blue-600 hover:underline">Prof. Dr. Raphael Volz</a> (<a href="https://www.hs-pforzheim.de/" target="_blank" class="text-blue-600 hover:underline">Hochschule Pforzheim</a>)</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM element references
+    const cityNameEl = document.getElementById('city-name');
+    const currentDateEl = document.getElementById('current-date');
+    const targetDateInput = document.getElementById('target-date');
+    const measurementTogglesContainer = document.getElementById('measurement-toggles');
+    const loader = document.getElementById('loader');
+    const messageArea = document.getElementById('message-area');
+    const downloadCsvBtn = document.getElementById('download-csv');
+    const downloadPngBtn = document.getElementById('download-png');
+
+    let weatherChart;
+    let allData = {};
+    let currentLocation = { lon: null, lat: null, city: '' };
+
+    // Configuration for weather measurements in German
+    const measurementConfig = {
+        'tas': { label: 'Ø Temp (°C)', color: 'rgba(255, 99, 132, 1)', yAxisID: 'y' },
+        'tasmax': { label: 'Max Temp (°C)', color: 'rgba(255, 0, 0, 1)', yAxisID: 'y' },
+        'tasmin': { label: 'Min Temp (°C)', color: 'rgba(0, 0, 255, 1)', yAxisID: 'y' },
+        'pr': { label: 'Niederschlag (mm)', color: 'rgba(54, 162, 235, 1)', yAxisID: 'y1' },
+        'hurs': { label: 'Feuchtigkeit (%)', color: 'rgba(75, 192, 192, 1)', yAxisID: 'y1' }
+    };
+
+    /** Get URL parameters */
+    function getUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            lon: params.get('lon'),
+            lat: params.get('lat'),
+            city: params.get('city') || 'Unbekannte Stadt'
+        };
+    }
+
+    /** Fetches data from a given URL. */
+    async function fetchData(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Netzwerkantwort war nicht ok für ${url}`);
+        }
+        return response.json();
+    }
+
+    /** Loads weather data for the selected city. */
+    async function loadWeatherData(lon, lat) {
+        showLoader();
+        messageArea.textContent = '';
+        try {
+            const dataUrl = `https://raw.githubusercontent.com/volzinnovation/klima1951.de/main/data/json/${lon}/${lat}/all-years.json`;
+            //console.log(dataUrl);
+            const rawData = await fetchData(dataUrl);
+            allData = rawData;
+            updateChart(); // Initial chart update
+        } catch (error) {
+            console.error('Fehler beim Laden der Wetterdaten:', error);
+            messageArea.textContent = `Wetterdaten für die angegebenen Koordinaten konnten nicht geladen werden.`;
+            allData = {};
+            if (weatherChart) {
+                weatherChart.data.datasets = [];
+                weatherChart.update();
+            }
+        }
+        hideLoader();
+    }
+
+    /** Initializes the chart with default settings. */
+    function initializeChart() {
+        const ctx = document.getElementById('weather-chart').getContext('2d');
+        weatherChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { 
+                        type: 'time',
+                        time: {
+                            unit: 'year',
+                            tooltipFormat: 'dd.MM.yyyy',
+                            displayFormats: {
+                                year: 'yyyy'
+                            }
+                        },
+                        title: { display: true, text: 'Jahr' } 
+                    },
+                    y: { position: 'left', title: { display: true, text: 'Temperatur (°C)' } },
+                    y1: { position: 'right', title: { display: true, text: 'Niederschlag (mm) / Feuchtigkeit (%)' }, grid: { drawOnChartArea: false } }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) label += context.parsed.y.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /** Creates the measurement toggle checkboxes. */
+    function createMeasurementToggles() {
+        Object.keys(measurementConfig).forEach((key, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `toggle-${key}`;
+            checkbox.value = key;
+            checkbox.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded';
+            if (index === 0) checkbox.checked = true; // Check the first one by default
+            const label = document.createElement('label');
+            label.htmlFor = `toggle-${key}`;
+            label.className = 'ml-2 block text-sm text-gray-900';
+            label.textContent = measurementConfig[key].label;
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            measurementTogglesContainer.appendChild(div);
+        });
+    }
+
+    /** Downloads the current chart data as a CSV file. */
+    function downloadCSV() {
+        if (!weatherChart || !weatherChart.data.datasets || weatherChart.data.datasets.length === 0) {
+            messageArea.textContent = 'Keine Daten zum Herunterladen vorhanden.';
+            return;
+        }
+
+        const datasets = weatherChart.data.datasets;
+        if (datasets.length === 0) {
+            messageArea.textContent = 'Keine Daten zum Herunterladen vorhanden.';
+            return;
+        }
+
+        const headers = ['Datum', ...datasets.map(ds => `"${ds.label}"`)];
+        let csvContent = headers.join(',') + '\r\n';
+
+        const dataByDate = {};
+        datasets.forEach((ds, datasetIndex) => {
+            ds.data.forEach(point => {
+                const dateStr = point.x.toISOString().split('T')[0];
+                if (!dataByDate[dateStr]) {
+                    dataByDate[dateStr] = new Array(datasets.length).fill('');
+                }
+                dataByDate[dateStr][datasetIndex] = point.y.toFixed(3);
+            });
+        });
+
+        const sortedDates = Object.keys(dataByDate).sort();
+
+        sortedDates.forEach(date => {
+            const row = [date, ...dataByDate[date]];
+            csvContent += row.join(',') + '\r\n';
+        });
+
+        const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        const city = new URLSearchParams(window.location.search).get('city') || 'standort';
+        const date = document.getElementById('target-date').value;
+        link.setAttribute("download", `geburtstagswetter_${city.replace(/\s/g, '_')}_${date}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    /** Downloads the current chart as a PNG file. */
+    function downloadPNG() {
+        if (!weatherChart) {
+            messageArea.textContent = 'Keine Grafik zum Herunterladen vorhanden.';
+            return;
+        }
+        const link = document.createElement('a');
+        const city = new URLSearchParams(window.location.search).get('city') || 'standort';
+        const date = document.getElementById('target-date').value;
+        link.download = `geburtstagswetter_${city.replace(/\s/g, '_')}_${date}.png`;
+        link.href = weatherChart.canvas.toDataURL('image/png', 1.0);
+        link.click();
+    }
+
+    function showLoader() { loader.classList.remove('hidden'); }
+    function hideLoader() { loader.classList.add('hidden'); }
+
+    /** Updates the chart based on the current user selections. */
+    function updateChart() {
+        if (!allData.time || !weatherChart) return;
+
+        const selectedDate = new Date(targetDateInput.value);
+        const selectedDay = selectedDate.getUTCDate();
+        const selectedMonth = selectedDate.getUTCMonth();
+        const selectedYear = selectedDate.getUTCFullYear();
+
+        const indices = allData.time.map((ts, index) => {
+            const date = new Date(ts / 1000000);
+            if (date.getUTCFullYear() >= selectedYear && date.getUTCDate() === selectedDay && date.getUTCMonth() === selectedMonth) {
+                return index;
+            }
+            return -1;
+        }).filter(index => index !== -1);
+
+        const filteredData = {};
+        for (const key in allData) {
+            if (Array.isArray(allData[key])) {
+                filteredData[key] = indices.map(i => allData[key][i]);
+            }
+        }
+
+        // Convert timestamps in the filtered data to Date objects
+        if (filteredData.time) {
+            filteredData.time = filteredData.time.map(ts => new Date(ts / 1000000));
+        }
+
+        const selectedMeasurements = Array.from(document.querySelectorAll('#measurement-toggles input:checked')).map(cb => cb.value);
+
+        const datasets = [];
+        const timeData = filteredData.time; // Already Date objects
+
+        selectedMeasurements.forEach(key => {
+            const measurementData = filteredData[key];
+
+            datasets.push({
+                label: measurementConfig[key].label,
+                data: timeData.map((t, i) => ({ x: t, y: measurementData[i] })),
+                borderColor: measurementConfig[key].color,
+                backgroundColor: measurementConfig[key].color,
+                yAxisID: measurementConfig[key].yAxisID,
+                tension: 0.1
+            });
+        });
+
+        weatherChart.data.datasets = datasets;
+
+        weatherChart.update();
+    }
+
+    /** Initialize page */
+    function initialize() {
+        const params = getUrlParams();
+        if (!params.lon || !params.lat) {
+            messageArea.textContent = 'Keine Standortdaten verfügbar. Bitte kehren Sie zur Hauptseite zurück und wählen Sie eine Stadt aus.';
+            return;
+        }
+
+        currentLocation = { lon: params.lon, lat: params.lat, city: decodeURIComponent(params.city) };
+        cityNameEl.textContent = currentLocation.city;
+
+        const defaultBirthday = new Date('2000-01-01T12:00:00Z');
+        targetDateInput.value = defaultBirthday.toISOString().split('T')[0];
+        currentDateEl.textContent = defaultBirthday.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+
+        createMeasurementToggles();
+        initializeChart();
+        loadWeatherData(currentLocation.lon, currentLocation.lat);
+
+        // Event Listeners
+        targetDateInput.addEventListener('change', () => {
+            const selectedDate = new Date(targetDateInput.value);
+            currentDateEl.textContent = selectedDate.toLocaleDateString('de-DE', { day: 'numeric', month: 'long' });
+            updateChart();
+        });
+        targetDateInput.addEventListener('change', updateChart);
+        measurementTogglesContainer.addEventListener('change', updateChart);
+        downloadCsvBtn.addEventListener('click', () => downloadCSV());
+        downloadPngBtn.addEventListener('click', downloadPNG);
+    }
+
+    initialize();
+});
+</script>
+</body>
+</html>
