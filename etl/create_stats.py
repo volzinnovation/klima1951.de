@@ -22,7 +22,8 @@ def calculate_stats_from_df(df):
     stats['Eistage'] = len(df[df['tasmax'] < 0])
     stats['Frosttage'] = len(df[df['tasmin'] < 0])
     stats['Hitzetage'] = len(df[df['tasmax'] >= 30])
-    stats['Niederschlagtage'] = len(df[df['pr'] >= 0.1])
+    stats['Niederschlagtage'] = len(df[df['pr'] >= 0.1]
+    stats['Starkregentage'] = len(df[df['pr'] >= 50.0]))
     stats['Tropennacht'] = len(df[df['tasmin'] >= 20])
     stats['Vegetationsperiode'] = len(df[df['tas'] > 5])
 
