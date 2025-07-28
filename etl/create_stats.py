@@ -50,7 +50,7 @@ def process_location(place_dir, years_to_process, overwrite=False):
 
     stats_columns = [
         'Jahr', 'Heizperiode', 'Eistage', 'Frosttage', 'Hitzetage',
-        'Tropennacht', 'Niederschlagtage', 'Vegetationsperiode',
+        'Tropennacht', 'Niederschlagtage', 'Starkregentage', 'Vegetationsperiode',
         'LetzterFrostFruehjahr', 'ErsterFrostHerbst', 'FrostFreiePeriode'
     ]
     all_stats_df = pd.DataFrame(columns=stats_columns)
