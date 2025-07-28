@@ -22,8 +22,8 @@ def calculate_stats_from_df(df):
     stats['Eistage'] = len(df[df['tasmax'] < 0])
     stats['Frosttage'] = len(df[df['tasmin'] < 0])
     stats['Hitzetage'] = len(df[df['tasmax'] >= 30])
-    stats['Niederschlagtage'] = len(df[df['pr'] >= 0.1]
-    stats['Starkregentage'] = len(df[df['pr'] >= 50.0]))
+    stats['Niederschlagtage'] = len(df[df['pr'] >= 0.1])
+    stats['Starkregentage'] = len(df[df['pr'] >= 50.0])
     stats['Tropennacht'] = len(df[df['tasmin'] >= 20])
     stats['Vegetationsperiode'] = len(df[df['tas'] > 5])
 
@@ -38,7 +38,7 @@ def calculate_stats_from_df(df):
     stats['LetzterFrostFruehjahr'] = int(last_frost_index)
     stats['ErsterFrostHerbst'] = int(first_frost_index)
     stats['FrostFreiePeriode'] = int(first_frost_index - last_frost_index)
-    
+
     return stats
 
 def process_location(place_dir, years_to_process, overwrite=False):
@@ -54,7 +54,7 @@ def process_location(place_dir, years_to_process, overwrite=False):
         'LetzterFrostFruehjahr', 'ErsterFrostHerbst', 'FrostFreiePeriode'
     ]
     all_stats_df = pd.DataFrame(columns=stats_columns)
-    
+
     for year in sorted(years_to_process, key=int):
         all_json_path = os.path.join(place_dir, str(year), "all.json")
         if not os.path.exists(all_json_path):
@@ -66,7 +66,7 @@ def process_location(place_dir, years_to_process, overwrite=False):
             df = pd.DataFrame(data)
             yearly_stats = calculate_stats_from_df(df)
             yearly_stats['Jahr'] = int(year)
-            
+
             new_row = pd.DataFrame([yearly_stats])
             all_stats_df = pd.concat([all_stats_df, new_row], ignore_index=True)
 
@@ -112,7 +112,7 @@ def main():
             if not os.path.isdir(lat_path): continue
 
             available_years = sorted([d for d in os.listdir(lat_path) if os.path.isdir(os.path.join(lat_path, d)) and d.isdigit()])
-            
+
             years_to_process = []
             if args.years == 'all':
                 years_to_process = available_years
