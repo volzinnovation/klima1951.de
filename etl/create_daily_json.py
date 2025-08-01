@@ -54,13 +54,23 @@ def process_file(var_name, year, cities_df, overwrite=False):
             print(f"No data found for {city_name} in {year} for {var_name}.")
             continue
 
-        # Prepare data for JSON output
+        # Prepare data for JSON output, removing NaN values
+        time_values = ds1['time'].values
+        var_values = ds1[var_name].values
+        
+        # Create masks for non-NaN values
+        mask = ~pd.isna(var_values)
+        
+        # Apply masks to filter out NaN values
+        filtered_time = time_values[mask].tolist()
+        filtered_values = var_values[mask].tolist()
+        
         data = {
-            "time": ds1['time'].values.tolist(),
-            var_name: ds1[var_name].values.tolist()
+            "time": filtered_time,
+            var_name: filtered_values
         }
 
-        output_dir = f"{OUTPUT_BASE}/{row['longitude']}/{row['latitude']}/{year}"
+        output_dir = f"../data/{OUTPUT_BASE}/{row['longitude']}/{row['latitude']}/{year}"
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, f'{var_name}.json')
 
