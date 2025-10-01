@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Das Wetter in Deutschland seit 1951</title>
+    <title>Wettervergleich für 2 Städte in Deutschland seit 1951</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
@@ -15,8 +15,8 @@
 
 <div class="container mx-auto p-4 md:p-8 flex-grow">
     <header class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-gray-900">Das Wetter in Deutschland seit 1951</h1>
-        <p class="text-lg text-gray-600 mt-2">Erkunden Sie den Klimawandel mit historischen Wetterdaten</p>
+        <h1 class="text-4xl font-bold text-gray-900">Wettervergleich für 2 Städte</h1>
+        <p class="text-lg text-gray-600 mt-2">Vergleichen Sie den Klimawandel mit historischen Wetterdaten für zwei Städte</p>
     </header>
 
     <main>
@@ -25,8 +25,12 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- City Selection -->
                 <div>
-                    <label for="city-select" class="block text-sm font-medium text-gray-700 mb-2">Stadt auswählen:</label>
-                    <select id="city-select" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                    <label for="city-select-1" class="block text-sm font-medium text-gray-700 mb-2">Stadt 1 auswählen:</label>
+                    <select id="city-select-1" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition mb-4">
+                        <option>Lade Städte...</option>
+                    </select>
+                    <label for="city-select-2" class="block text-sm font-medium text-gray-700 mb-2">Stadt 2 auswählen:</label>
+                    <select id="city-select-2" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
                         <option>Lade Städte...</option>
                     </select>
                 </div>
@@ -86,7 +90,7 @@
 
         <!-- Download Buttons -->
         <div class="mt-6 bg-white p-6 rounded-2xl shadow-lg flex flex-wrap gap-4 justify-end">
-            <a href="vergleich.html" class="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75 transition">Städtevergleich</a>
+            <a id="einzelansicht-link" href="#" class="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-75 transition">Einzelansicht</a>
             <a id="heute-vor-link" href="#" class="px-4 py-2 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-75 transition">Heute vor...</a>
             <a id="stats-link" href="#" class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75 transition">Klimastatistik</a>
             <button id="download-csv" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition">CSV Herunterladen</button>
@@ -103,7 +107,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // DOM element references
-        const citySelect = document.getElementById('city-select');
+        const citySelect1 = document.getElementById('city-select-1');
+        const citySelect2 = document.getElementById('city-select-2');
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
         const measurementTogglesContainer = document.getElementById('measurement-toggles');
@@ -115,11 +120,13 @@
         const messageArea = document.getElementById('message-area');
         const downloadCsvBtn = document.getElementById('download-csv');
         const downloadPngBtn = document.getElementById('download-png');
-        const statsLink = document.getElementById('stats-link'); // New button reference
-        const heuteVorLink = document.getElementById('heute-vor-link'); // Heute vor button reference
+        const statsLink = document.getElementById('stats-link');
+        const heuteVorLink = document.getElementById('heute-vor-link');
+        const einzelansichtLink = document.getElementById('einzelansicht-link');
 
         let weatherChart;
-        let allData = {};
+        let allData1 = {};
+        let allData2 = {};
         let citiesData = [];
 
         // Configuration for weather measurements in German
@@ -151,42 +158,77 @@
         }
 
         /**
-         * Populates the city selection dropdown and sets Berlin as default.
+         * Populates the city selection dropdowns and sets defaults.
          */
         async function populateCities() {
             const citiesUrl = 'https://raw.githubusercontent.com/volzinnovation/klima1951.de/refs/heads/main/misc/cities.json';
             const data = await fetchData(citiesUrl);
             if (data && data.cities) {
                 citiesData = data.cities;
-                citySelect.innerHTML = ''; // Clear loading message
-                citiesData.forEach((city, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = city.city;
-                    citySelect.appendChild(option);
+                [citySelect1, citySelect2].forEach(select => {
+                    select.innerHTML = ''; // Clear loading message
+                    citiesData.forEach((city, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = city.city;
+                        select.appendChild(option);
+                    });
                 });
 
                 const berlinIndex = citiesData.findIndex(city => city.city === "Berlin");
+                const hamburgIndex = citiesData.findIndex(city => city.city === "Hamburg");
 
-                if (berlinIndex !== -1) {
-                    citySelect.value = berlinIndex;
-                    loadWeatherData(berlinIndex);
-                } else {
-                    loadWeatherData(0);
-                }
+                citySelect1.value = berlinIndex !== -1 ? berlinIndex : 0;
+                citySelect2.value = hamburgIndex !== -1 ? hamburgIndex : 1;
+
+                loadAllWeatherData();
 
             } else {
-                citySelect.innerHTML = '<option>Städte konnten nicht geladen werden</option>';
+                [citySelect1, citySelect2].forEach(select => {
+                    select.innerHTML = '<option>Städte konnten nicht geladen werden</option>';
+                });
             }
         }
 
         /**
-         * Loads weather data for the selected city, trying nearby coordinates on failure.
-         * @param {number} cityIndex - The index of the city in the citiesData array.
+         * Loads weather data for both selected cities.
          */
-        async function loadWeatherData(cityIndex) {
+        async function loadAllWeatherData() {
             showLoader();
             messageArea.textContent = '';
+
+            const cityIndex1 = citySelect1.value;
+            const cityIndex2 = citySelect2.value;
+
+            const [result1, result2] = await Promise.all([
+                loadWeatherDataForCity(cityIndex1),
+                loadWeatherDataForCity(cityIndex2)
+            ]);
+
+            allData1 = result1.data;
+            allData2 = result2.data;
+
+            if (result1.lon && result1.lat) {
+                const city1Name = encodeURIComponent(result1.city);
+                statsLink.href = `stats.html?lon=${result1.lon}&lat=${result1.lat}&city=${city1Name}`;
+                heuteVorLink.href = `heutevor.html?lon=${result1.lon}&lat=${result1.lat}&city=${city1Name}`;
+                einzelansichtLink.href = `index.html?lon=${result1.lon}&lat=${result1.lat}&city=${city1Name}`;
+            } else {
+                statsLink.href = '#';
+                heuteVorLink.href = '#';
+                einzelansichtLink.href = '#';
+            }
+
+            updateChart();
+            hideLoader();
+        }
+
+        /**
+         * Loads weather data for a single city, trying nearby coordinates on failure.
+         * @param {number} cityIndex - The index of the city in the citiesData array.
+         * @returns {Promise<object>} A promise that resolves with the weather data and coordinates.
+         */
+        async function loadWeatherDataForCity(cityIndex) {
             const city = citiesData[cityIndex];
             const baseLon = city.longitude;
             const baseLat = city.latitude;
@@ -197,46 +239,22 @@
                 { lon: baseLon, lat: baseLat - 1 }, { lon: baseLon + 1, lat: baseLat - 1 },
             ];
 
-            let data = null;
-
             for (const attempt of attempts) {
                 const dataUrl = `https://raw.githubusercontent.com/volzinnovation/klima1951.de/refs/heads/main/data/json/${attempt.lon}/${attempt.lat}/all-years.json`;
                 try {
                     const response = await fetch(dataUrl);
                     if (response.ok) {
                         console.log(`Erfolg: Daten für ${city.city} geladen bei lon=${attempt.lon}, lat=${attempt.lat}`);
-                        data = await response.json();
-                        // Update the stats link with the successful coordinates and city name
-                        statsLink.href = `stats.html?lon=${attempt.lon}&lat=${attempt.lat}&city=${encodeURIComponent(city.city)}`;
-                        // Update the heute vor link with the successful coordinates and city name
-                        heuteVorLink.href = `heutevor.html?lon=${attempt.lon}&lat=${attempt.lat}&city=${encodeURIComponent(city.city)}`;
-                        break;
-                    } else {
-                        console.log(`Versuch fehlgeschlagen für lon=${attempt.lon}, lat=${attempt.lat}. Status: ${response.status}`);
+                        const data = await response.json();
+                        return { data: data, lon: attempt.lon, lat: attempt.lat, city: city.city };
                     }
                 } catch (error) {
                     console.error(`Fehler beim Laden von ${dataUrl}:`, error);
                 }
             }
 
-            if (data) {
-                allData = data;
-                updateChart();
-            } else {
-                messageArea.textContent = `Wetterdaten für ${city.city} oder nahegelegene Koordinaten konnten nicht gefunden werden.`;
-                allData = {};
-                if (weatherChart) {
-                    weatherChart.data.datasets = [];
-                    weatherChart.update();
-                }
-                // Disable stats link if no data is found
-                statsLink.href = '#';
-                statsLink.classList.add('opacity-50', 'cursor-not-allowed');
-                // Disable heute vor link if no data is found
-                heuteVorLink.href = '#';
-                heuteVorLink.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-            hideLoader();
+            messageArea.textContent += ` Wetterdaten für ${city.city} oder nahegelegene Koordinaten konnten nicht gefunden werden.`;
+            return { data: {}, lon: null, lat: null, city: city.city };
         }
 
         /**
@@ -276,12 +294,7 @@
          * Updates the chart based on the current user selections.
          */
         function updateChart() {
-            if (!allData.time || !weatherChart) return;
-
-            // Enable stats link
-            statsLink.classList.remove('opacity-50', 'cursor-not-allowed');
-            // Enable heute vor link
-            heuteVorLink.classList.remove('opacity-50', 'cursor-not-allowed');
+            if ((!allData1.time && !allData2.time) || !weatherChart) return;
 
             regressionInfoContainer.innerHTML = ''; // Clear regression info
             const startDate = new Date(startDateInput.value);
@@ -292,52 +305,61 @@
             const selectedMeasurements = Array.from(document.querySelectorAll('#measurement-toggles input:checked')).map(cb => cb.value);
 
             const datasets = [];
+            const city1Name = citySelect1.options[citySelect1.selectedIndex].text;
+            const city2Name = citySelect2.options[citySelect2.selectedIndex].text;
 
-            const filteredIndices = allData.time.map((ts, index) => {
-                const date = new Date(ts / 1_000_000);
-                return (date >= startDate && date <= endDate) ? index : -1;
-            }).filter(index => index !== -1);
+            [allData1, allData2].forEach((allData, index) => {
+                if (!allData.time) return;
 
-            const timeData = filteredIndices.map(i => new Date(allData.time[i] / 1_000_000));
+                const cityName = index === 0 ? city1Name : city2Name;
+                const filteredIndices = allData.time.map((ts, index) => {
+                    const date = new Date(ts / 1_000_000);
+                    return (date >= startDate && date <= endDate) ? index : -1;
+                }).filter(index => index !== -1);
 
-            selectedMeasurements.forEach(key => {
-                const measurementData = filteredIndices.map(i => allData[key][i]);
+                const timeData = filteredIndices.map(i => new Date(allData.time[i] / 1_000_000));
 
-                let aggregationType = 'avg';
-                if (key === 'pr') aggregationType = 'sum';
-                else if (key === 'tasmax') aggregationType = 'max';
-                else if (key === 'tasmin') aggregationType = 'min';
+                selectedMeasurements.forEach(key => {
+                    const measurementData = filteredIndices.map(i => allData[key][i]);
 
-                const { aggregatedTime, aggregatedData } = aggregateData(timeData, measurementData, aggregation, aggregationType);
+                    let aggregationType = 'avg';
+                    if (key === 'pr') aggregationType = 'sum';
+                    else if (key === 'tasmax') aggregationType = 'max';
+                    else if (key === 'tasmin') aggregationType = 'min';
 
-                datasets.push({
-                    label: measurementConfig[key].label,
-                    data: aggregatedTime.map((t, i) => ({ x: t, y: aggregatedData[i] })),
-                    borderColor: measurementConfig[key].color,
-                    backgroundColor: measurementConfig[key].color.replace('1)', '0.2)'),
-                    yAxisID: measurementConfig[key].yAxisID,
-                    tension: 0.1,
-                    pointRadius: aggregation === 'daily' ? 2 : 4,
-                });
+                    const { aggregatedTime, aggregatedData } = aggregateData(timeData, measurementData, aggregation, aggregationType);
 
-                if (showRegression && aggregatedData.length > 1) {
-                    const { line, slope, intercept } = calculateLinearRegression(aggregatedTime, aggregatedData);
+                    const newColor = index === 0 ? 'rgba(255, 0, 0, 1)' : 'rgba(54, 162, 235, 1)'; // City 1: Red, City 2: Blue
+
                     datasets.push({
-                        label: `${measurementConfig[key].label} (Trend)`,
-                        data: line,
-                        borderColor: measurementConfig[key].color.replace('1)', '0.5)'),
-                        borderDash: [5, 5],
+                        label: `${measurementConfig[key].label} ${cityName}`,
+                        data: aggregatedTime.map((t, i) => ({ x: t, y: aggregatedData[i] })),
+                        borderColor: newColor,
+                        backgroundColor: newColor.replace('1)', '0.2)'),
                         yAxisID: measurementConfig[key].yAxisID,
-                        pointRadius: 0,
-                        fill: false,
+                        tension: 0.1,
+                        pointRadius: aggregation === 'daily' ? 2 : 4,
                     });
 
-                    // Display regression parameters
-                    const infoP = document.createElement('p');
-                    const delta = line[1].y - line[0].y
-                    infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend</strong> : von ${(line[0].y).toFixed(2)} nach ${(line[1].y).toFixed(2)} (Differenz ${delta.toFixed(2)})`;
-                    regressionInfoContainer.appendChild(infoP);
-                }
+                    if (showRegression && aggregatedData.length > 1) {
+                        const { line, slope, intercept } = calculateLinearRegression(aggregatedTime, aggregatedData);
+                        datasets.push({
+                            label: `${measurementConfig[key].label} ${cityName} (Trend)`,
+                            data: line,
+                            borderColor: newColor,
+                            borderDash: [2, 2],
+                            yAxisID: measurementConfig[key].yAxisID,
+                            pointRadius: 0,
+                            fill: false,
+                        });
+
+                        // Display regression parameters
+                        const infoP = document.createElement('p');
+                        const delta = line[1].y - line[0].y
+                        infoP.innerHTML = `<strong>${measurementConfig[key].label} Trend ${cityName}</strong> : von ${(line[0].y).toFixed(2)} nach ${(line[1].y).toFixed(2)} (Differenz ${delta.toFixed(2)})`;
+                        regressionInfoContainer.appendChild(infoP);
+                    }
+                });
             });
 
             weatherChart.data.datasets = datasets;
@@ -432,14 +454,18 @@
             Object.keys(measurementConfig).forEach(key => {
                 const div = document.createElement('div');
                 div.className = 'flex items-center';
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox'; checkbox.id = `toggle-${key}`;
-                checkbox.value = key; checkbox.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded';
-                if (key === 'tas') checkbox.checked = true;
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.id = `toggle-${key}`;
+                radio.name = 'measurement'; // Group radio buttons
+                radio.value = key;
+                radio.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300';
+                if (key === 'tas') radio.checked = true;
                 const label = document.createElement('label');
                 label.htmlFor = `toggle-${key}`; label.textContent = measurementConfig[key].label;
                 label.className = 'ml-2 block text-sm text-gray-900';
-                div.appendChild(checkbox); div.appendChild(label);
+                div.appendChild(radio);
+                div.appendChild(label);
                 measurementTogglesContainer.appendChild(div);
             });
         }
@@ -448,11 +474,11 @@
          * Downloads the current chart view as a PNG file.
          */
         function downloadPNG() {
-            // Get dynamic title info
-            const selectedCity = citySelect.options[citySelect.selectedIndex].text;
+            const city1Name = citySelect1.options[citySelect1.selectedIndex].text;
+            const city2Name = citySelect2.options[citySelect2.selectedIndex].text;
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            const titleText = `Das Wetter in ${selectedCity} zwischen ${startDate} und ${endDate}`;
+            const titleText = `Wettervergleich: ${city1Name} und ${city2Name} von ${startDate} bis ${endDate}`;
 
             const footerLines = [
                 "(c) klima1951.de auf Basis der Hydrometeorologische Rasterdaten (HYRAS) des Deutschen Wetterdienstes (DWD)",
@@ -491,7 +517,7 @@
 
             const link = document.createElement('a');
             link.href = tempCanvas.toDataURL('image/png');
-            link.download = 'wetter-diagramm.png';
+            link.download = 'wetter-vergleich.png';
             link.click();
         }
 
@@ -532,7 +558,7 @@
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', 'wetter-daten.csv');
+            link.setAttribute('download', 'wetter-vergleich.csv');
             link.click();
         }
 
@@ -540,7 +566,8 @@
         function hideLoader() { loader.classList.add('hidden'); }
 
         // Event Listeners
-        citySelect.addEventListener('change', (e) => loadWeatherData(e.target.value));
+        citySelect1.addEventListener('change', loadAllWeatherData);
+        citySelect2.addEventListener('change', loadAllWeatherData);
         startDateInput.addEventListener('change', updateChart);
         endDateInput.addEventListener('change', updateChart);
         aggregationSelect.addEventListener('change', updateChart);
