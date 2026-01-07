@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monatsstatistik - Historische Wetterdaten</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .stats-table {
+        font-size: 0.85rem;
+      }
+      .stats-table th,
+      .stats-table td {
+        padding: 0.5rem 0.75rem;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .stats-table th:first-child,
+      .stats-table td:first-child {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        background: inherit;
+        z-index: 1;
+      }
+      .stats-table thead th {
+        background: #f9fafb;
+      }
+      .stats-table tbody tr:hover {
+        background: #f3f4f6;
+      }
+      .stats-table tbody tr:nth-child(even) {
+        background: #fafafa;
+      }
+      .stats-table tbody tr:nth-child(even):hover {
+        background: #f0f0f0;
+      }
+      .month-header {
+        min-width: 70px;
+      }
+      .value-positive {
+        color: black;
+      }
+      .value-negative {
+        color: #2563eb;
+      }
+      .average-row {
+        background: #e0e7ff !important;
+        font-weight: 600;
+      }
+      .average-row:hover {
+        background: #c7d2fe !important;
+      }
+      .average-row td {
+        border-bottom: 2px solid #6366f1;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+    <div class="container mx-auto p-4 md:p-8 flex-grow">
+      <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900">
+          Monatsstatistik für <span id="city-name">...</span>
+        </h1>
+        <p class="text-lg text-gray-600 mt-2">
+          Monatliche Wetterdaten von 1951 bis heute
+        </p>
+      </header>
+
+      <main>
+        <!-- Controls Section -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Measurement Selection -->
+            <div>
+              <label
+                for="measurement-select"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Messung auswählen:</label
+              >
+              <select
+                id="measurement-select"
+                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              >
+                <option value="tas">Ø Temperatur (°C)</option>
+                <option value="tasmax">Max Temperatur (°C)</option>
+                <option value="tasmin">Min Temperatur (°C)</option>
+                <option value="pr">Niederschlag (mm)</option>
+                <option value="hurs">Luftfeuchtigkeit (%)</option>
+              </select>
+            </div>
+
+            <!-- Aggregation Type Info -->
+            <div class="flex items-center">
+              <div class="bg-indigo-50 p-4 rounded-lg w-full">
+                <p class="text-sm text-indigo-800">
+                  <strong>Aggregation:</strong>
+                  <span id="aggregation-info">Monatsmittelwert</span>
+                </p>
+                <p
+                  class="text-xs text-indigo-600 mt-1"
+                  id="aggregation-description"
+                >
+                  Für Temperatur wird der Durchschnitt berechnet, für
+                  Niederschlag die Summe.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loader" class="flex items-center justify-center py-16">
+          <div
+            class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"
+          ></div>
+          <p class="ml-4 text-lg font-semibold text-gray-700">
+            Lade Monatsdaten...
+          </p>
+        </div>
+
+        <!-- Message Area -->
+        <div
+          id="message-area"
+          class="text-center text-red-500 mt-4 font-medium text-lg"
+        ></div>
+
+        <!-- Stats Table Section -->
+        <div
+          id="stats-container"
+          class="bg-white p-6 rounded-2xl shadow-lg overflow-x-auto hidden"
+        >
+          <h2 class="text-2xl font-bold text-gray-900 mb-4" id="table-title">
+            Monatliche Durchschnittswerte
+          </h2>
+          <div class="overflow-x-auto">
+            <table
+              id="stats-table"
+              class="stats-table min-w-full divide-y divide-gray-200"
+            >
+              <thead>
+                <tr id="table-header">
+                  <!-- Headers will be inserted by JavaScript -->
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <!-- Rows will be inserted by JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Download Buttons -->
+        <div
+          class="mt-6 bg-white p-6 rounded-2xl shadow-lg flex flex-wrap gap-4 justify-end"
+        >
+          <a
+            href="index.html"
+            class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 transition"
+            >Zurück zum Diagramm</a
+          >
+          <button
+            id="download-csv"
+            class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition"
+          >
+            CSV Herunterladen
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <footer class="text-center p-4 text-xs text-gray-500">
+      <p>
+        Open Data: (c)
+        <a
+          target="_blank"
+          class="text-blue-600 hover:underline"
+          href="https://www.dwd.de/DE/leistungen/hyras/hyras.html"
+          >DWD HYRAS</a
+        >. Code:
+        <a
+          target="_blank"
+          class="text-blue-600 hover:underline"
+          href="https://github.com/volzinnovation/klima1951.de/"
+          >Open Source</a
+        >
+      </p>
+      <p>
+        (c) 2025
+        <a
+          href="https://www.raphaelvolz.de/"
+          target="_blank"
+          class="text-blue-600 hover:underline"
+          >Prof. Dr. Raphael Volz</a
+        >
+        (<a
+          href="https://www.hs-pforzheim.de/"
+          target="_blank"
+          class="text-blue-600 hover:underline"
+          >Hochschule Pforzheim</a
+        >)
+      </p>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // DOM element references
+        const cityNameEl = document.getElementById("city-name");
+        const measurementSelect = document.getElementById("measurement-select");
+        const aggregationInfo = document.getElementById("aggregation-info");
+        const aggregationDescription = document.getElementById(
+          "aggregation-description"
+        );
+        const tableTitle = document.getElementById("table-title");
+        const tableHeader = document.getElementById("table-header");
+        const tableBody = document.getElementById("table-body");
+        const statsContainer = document.getElementById("stats-container");
+        const loader = document.getElementById("loader");
+        const messageArea = document.getElementById("message-area");
+        const downloadCsvBtn = document.getElementById("download-csv");
+
+        let allData = {};
+        let currentLocation = { lon: null, lat: null, city: "" };
+        let monthlyStats = {}; // Will store processed monthly data
+
+        // Month names in German
+        const monthNames = [
+          "Jan",
+          "Feb",
+          "Mär",
+          "Apr",
+          "Mai",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Dez",
+        ];
+        const monthNamesFull = [
+          "Januar",
+          "Februar",
+          "März",
+          "April",
+          "Mai",
+          "Juni",
+          "Juli",
+          "August",
+          "September",
+          "Oktober",
+          "November",
+          "Dezember",
+        ];
+
+        // Configuration for weather measurements
+        const measurementConfig = {
+          tas: {
+            label: "Ø Temperatur (°C)",
+            aggregation: "avg",
+            aggregationLabel: "Monatsmittelwert",
+            description: "Durchschnittliche Tagestemperatur pro Monat",
+            unit: "°C",
+            decimals: 1,
+          },
+          tasmax: {
+            label: "Max Temperatur (°C)",
+            aggregation: "max",
+            aggregationLabel: "Monatshöchstwert",
+            description: "Höchste gemessene Temperatur pro Monat",
+            unit: "°C",
+            decimals: 1,
+          },
+          tasmin: {
+            label: "Min Temperatur (°C)",
+            aggregation: "min",
+            aggregationLabel: "Monatstieftswert",
+            description: "Niedrigste gemessene Temperatur pro Monat",
+            unit: "°C",
+            decimals: 1,
+          },
+          pr: {
+            label: "Niederschlag (mm)",
+            aggregation: "sum",
+            aggregationLabel: "Monatssumme",
+            description: "Gesamtniederschlag pro Monat",
+            unit: "mm",
+            decimals: 1,
+          },
+          hurs: {
+            label: "Luftfeuchtigkeit (%)",
+            aggregation: "avg",
+            aggregationLabel: "Monatsmittelwert",
+            description: "Durchschnittliche Luftfeuchtigkeit pro Monat",
+            unit: "%",
+            decimals: 1,
+          },
+        };
+
+        /** Get URL parameters */
+        function getUrlParams() {
+          const params = new URLSearchParams(window.location.search);
+          return {
+            lon: params.get("lon"),
+            lat: params.get("lat"),
+            city: params.get("city") || "Unbekannte Stadt",
+          };
+        }
+
+        /** Fetches data from a given URL. */
+        async function fetchData(url) {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Netzwerkantwort war nicht ok für ${url}`);
+          }
+          return response.json();
+        }
+
+        /** Loads weather data for the selected city. */
+        async function loadWeatherData(lon, lat) {
+          showLoader();
+          messageArea.textContent = "";
+          try {
+            const dataUrl = `https://raw.githubusercontent.com/volzinnovation/klima1951.de/main/data/json/${lon}/${lat}/all-years.json`;
+            const rawData = await fetchData(dataUrl);
+            allData = rawData;
+            processMonthlyData();
+            updateTable();
+          } catch (error) {
+            console.error("Fehler beim Laden der Wetterdaten:", error);
+            messageArea.textContent = `Wetterdaten für die angegebenen Koordinaten konnten nicht geladen werden.`;
+            allData = {};
+          }
+          hideLoader();
+        }
+
+        /** Process all data into monthly statistics */
+        function processMonthlyData() {
+          if (!allData.time || allData.time.length === 0) return;
+
+          monthlyStats = {};
+
+          // Initialize structure for each measurement
+          Object.keys(measurementConfig).forEach((measurement) => {
+            monthlyStats[measurement] = {};
+          });
+
+          // Process each data point
+          allData.time.forEach((ts, index) => {
+            const date = new Date(ts / 1000000);
+            const year = date.getFullYear();
+            const month = date.getMonth(); // 0-11
+
+            Object.keys(measurementConfig).forEach((measurement) => {
+              if (!allData[measurement]) return;
+
+              if (!monthlyStats[measurement][year]) {
+                monthlyStats[measurement][year] = {};
+              }
+              if (!monthlyStats[measurement][year][month]) {
+                monthlyStats[measurement][year][month] = {
+                  values: [],
+                  sum: 0,
+                  count: 0,
+                  min: Infinity,
+                  max: -Infinity,
+                };
+              }
+
+              const value = allData[measurement][index];
+              if (value !== null && value !== undefined && !isNaN(value)) {
+                monthlyStats[measurement][year][month].values.push(value);
+                monthlyStats[measurement][year][month].sum += value;
+                monthlyStats[measurement][year][month].count++;
+                monthlyStats[measurement][year][month].min = Math.min(
+                  monthlyStats[measurement][year][month].min,
+                  value
+                );
+                monthlyStats[measurement][year][month].max = Math.max(
+                  monthlyStats[measurement][year][month].max,
+                  value
+                );
+              }
+            });
+          });
+        }
+
+        /** Get aggregated value based on measurement type */
+        function getAggregatedValue(statsObj, aggregationType) {
+          if (!statsObj || statsObj.count === 0) return null;
+
+          switch (aggregationType) {
+            case "sum":
+              return statsObj.sum;
+            case "min":
+              return statsObj.min === Infinity ? null : statsObj.min;
+            case "max":
+              return statsObj.max === -Infinity ? null : statsObj.max;
+            case "avg":
+            default:
+              return statsObj.sum / statsObj.count;
+          }
+        }
+
+        /** Update the table with current measurement selection */
+        function updateTable() {
+          const measurement = measurementSelect.value;
+          const config = measurementConfig[measurement];
+
+          if (!monthlyStats[measurement]) {
+            messageArea.textContent =
+              "Keine Daten für diese Messung verfügbar.";
+            return;
+          }
+
+          // Update info text
+          aggregationInfo.textContent = config.aggregationLabel;
+          aggregationDescription.textContent = config.description;
+          tableTitle.textContent = `${config.label} - ${config.aggregationLabel} pro Monat`;
+
+          // Build table header
+          tableHeader.innerHTML = `
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jahr</th>
+            ${monthNames
+              .map(
+                (m) =>
+                  `<th class="month-header px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">${m}</th>`
+              )
+              .join("")}
+        `;
+
+          // Get all years and sort them
+          const years = Object.keys(monthlyStats[measurement])
+            .map(Number)
+            .sort((a, b) => a - b);
+
+          // Calculate average for each month across all years
+          const monthlyAverages = [];
+          for (let month = 0; month < 12; month++) {
+            let sum = 0;
+            let count = 0;
+            years.forEach((year) => {
+              const statsObj = monthlyStats[measurement][year]?.[month];
+              const value = getAggregatedValue(statsObj, config.aggregation);
+              if (value !== null) {
+                sum += value;
+                count++;
+              }
+            });
+            monthlyAverages[month] = count > 0 ? sum / count : null;
+          }
+
+          // Build table rows
+          tableBody.innerHTML = "";
+
+          // Add average row first (after header)
+          const avgRow = document.createElement("tr");
+          avgRow.className = "average-row";
+          let avgRowHtml = `<td class="px-6 py-2 whitespace-nowrap text-sm font-bold text-gray-900">Ø Alle Jahre</td>`;
+          for (let month = 0; month < 12; month++) {
+            const value = monthlyAverages[month];
+            if (value !== null) {
+              const formattedValue = value.toFixed(config.decimals);
+              let valueClass = "";
+              if (measurement.startsWith("tas")) {
+                if (value > 0) valueClass = "value-positive";
+                else if (value < 0) valueClass = "value-negative";
+              }
+              avgRowHtml += `<td class="px-4 py-2 whitespace-nowrap text-sm font-bold ${valueClass}">${formattedValue}</td>`;
+            } else {
+              avgRowHtml += `<td class="px-4 py-2 whitespace-nowrap text-sm text-gray-300">-</td>`;
+            }
+          }
+          avgRow.innerHTML = avgRowHtml;
+          tableBody.appendChild(avgRow);
+
+          // Add yearly rows
+          years.forEach((year) => {
+            const row = document.createElement("tr");
+            row.className = "hover:bg-gray-50";
+
+            let rowHtml = `<td class="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900 bg-white">${year}</td>`;
+
+            for (let month = 0; month < 12; month++) {
+              const statsObj = monthlyStats[measurement][year]?.[month];
+              const value = getAggregatedValue(statsObj, config.aggregation);
+
+              if (value !== null) {
+                const formattedValue = value.toFixed(config.decimals);
+                let valueClass = "";
+
+                // Add color coding for temperature values
+                if (measurement.startsWith("tas")) {
+                  if (value > 0) valueClass = "value-positive";
+                  else if (value < 0) valueClass = "value-negative";
+                }
+
+                rowHtml += `<td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700 ${valueClass}">${formattedValue}</td>`;
+              } else {
+                rowHtml += `<td class="px-4 py-2 whitespace-nowrap text-sm text-gray-300">-</td>`;
+              }
+            }
+
+            row.innerHTML = rowHtml;
+            tableBody.appendChild(row);
+          });
+
+          statsContainer.classList.remove("hidden");
+        }
+
+        /** Downloads the current table data as a CSV file. */
+        function downloadCSV() {
+          const measurement = measurementSelect.value;
+          const config = measurementConfig[measurement];
+
+          if (!monthlyStats[measurement]) {
+            messageArea.textContent =
+              "Keine Daten zum Herunterladen vorhanden.";
+            return;
+          }
+
+          // Build CSV header
+          const headers = ["Jahr", ...monthNamesFull];
+          let csvContent = headers.join(";") + "\r\n";
+
+          // Get all years and sort them
+          const years = Object.keys(monthlyStats[measurement])
+            .map(Number)
+            .sort((a, b) => a - b);
+
+          // Calculate average for each month across all years
+          const monthlyAverages = [];
+          for (let month = 0; month < 12; month++) {
+            let sum = 0;
+            let count = 0;
+            years.forEach((year) => {
+              const statsObj = monthlyStats[measurement][year]?.[month];
+              const value = getAggregatedValue(statsObj, config.aggregation);
+              if (value !== null) {
+                sum += value;
+                count++;
+              }
+            });
+            monthlyAverages[month] = count > 0 ? sum / count : null;
+          }
+
+          // Add average row first
+          const avgRow = ["Ø Alle Jahre"];
+          for (let month = 0; month < 12; month++) {
+            const value = monthlyAverages[month];
+            if (value !== null) {
+              avgRow.push(value.toFixed(config.decimals).replace(".", ","));
+            } else {
+              avgRow.push("");
+            }
+          }
+          csvContent += avgRow.join(";") + "\r\n";
+
+          // Build CSV rows for each year
+          years.forEach((year) => {
+            const row = [year];
+            for (let month = 0; month < 12; month++) {
+              const statsObj = monthlyStats[measurement][year]?.[month];
+              const value = getAggregatedValue(statsObj, config.aggregation);
+
+              if (value !== null) {
+                // Use German number format (comma as decimal separator)
+                row.push(value.toFixed(config.decimals).replace(".", ","));
+              } else {
+                row.push("");
+              }
+            }
+            csvContent += row.join(";") + "\r\n";
+          });
+
+          // Create and trigger download
+          const blob = new Blob(["\ufeff" + csvContent], {
+            type: "text/csv;charset=utf-8;",
+          });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          const city = currentLocation.city.replace(/\s/g, "_");
+          link.download = `monatsstatistik_${city}_${measurement}.csv`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        function showLoader() {
+          loader.classList.remove("hidden");
+          statsContainer.classList.add("hidden");
+        }
+
+        function hideLoader() {
+          loader.classList.add("hidden");
+        }
+
+        /** Initialize page */
+        function initialize() {
+          const params = getUrlParams();
+          if (!params.lon || !params.lat) {
+            messageArea.textContent =
+              "Keine Standortdaten verfügbar. Bitte kehren Sie zur Hauptseite zurück und wählen Sie eine Stadt aus.";
+            loader.classList.add("hidden");
+            return;
+          }
+
+          currentLocation = {
+            lon: params.lon,
+            lat: params.lat,
+            city: decodeURIComponent(params.city),
+          };
+          cityNameEl.textContent = currentLocation.city;
+          document.title = `Monatsstatistik für ${currentLocation.city}`;
+
+          loadWeatherData(currentLocation.lon, currentLocation.lat);
+
+          // Event Listeners
+          measurementSelect.addEventListener("change", updateTable);
+          downloadCsvBtn.addEventListener("click", downloadCSV);
+        }
+
+        initialize();
+      });
+    </script>
+  </body>
+</html>
