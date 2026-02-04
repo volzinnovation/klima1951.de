@@ -22,7 +22,7 @@ OUTPUT_BASE = 'json'
 
 def process_file(var_name, year, cities_df, overwrite=False):
     """Processes a single NetCDF file for a given measure and year."""
-    input_file = f'hyras/{var_name}_hyras_1_{year}_v6-0_de.nc'
+    input_file = f'hyras/{var_name}_hyras_1_{year}_v6-1_de.nc'
     print(f"Processing {input_file}...")
 
     if not os.path.exists(input_file):

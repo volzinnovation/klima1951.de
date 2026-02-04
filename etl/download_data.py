@@ -1,5 +1,5 @@
 #
-# Downloads HYRAS v6.0 nc files from the opendata.dwd.de site
+# Downloads HYRAS v6.1 nc files from the opendata.dwd.de site
 # Vibe Coded by Raphael Volz on 2025-06-16 with help of Gemini on Colab
 # Refactored by Cascade on 2025-07-17
 #
@@ -8,7 +8,7 @@ import argparse
 import datetime
 from bs4 import BeautifulSoup
 
-BASE_PATTERN = "v6-0_de.nc"
+BASE_PATTERN = "v6-1_de.nc"
 # path ="../../data/hyras/"
 
 def download(url, year_filter):
