@@ -128,7 +128,50 @@
                 <option value="daily">Täglich</option>
                 <option value="weekly">Wöchentlich</option>
                 <option value="monthly">Monatlich</option>
+                <option value="seasonal">Jahreszeitlich</option>
                 <option value="yearly">Jährlich</option>
+              </select>
+            </div>
+            <div id="month-filter-container" class="hidden">
+              <label
+                for="month-filter"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Monat:</label
+              >
+              <select
+                id="month-filter"
+                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              >
+                <option value="">Alle Monate</option>
+                <option value="0">Januar</option>
+                <option value="1">Februar</option>
+                <option value="2">März</option>
+                <option value="3">April</option>
+                <option value="4">Mai</option>
+                <option value="5">Juni</option>
+                <option value="6">Juli</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">Oktober</option>
+                <option value="10">November</option>
+                <option value="11">Dezember</option>
+              </select>
+            </div>
+            <div id="season-filter-container" class="hidden">
+              <label
+                for="season-filter"
+                class="block text-sm font-medium text-gray-700 mb-2"
+                >Jahreszeit:</label
+              >
+              <select
+                id="season-filter"
+                class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              >
+                <option value="">Alle Jahreszeiten</option>
+                <option value="winter">Winter</option>
+                <option value="spring">Frühling</option>
+                <option value="summer">Sommer</option>
+                <option value="autumn">Herbst</option>
               </select>
             </div>
           </div>
@@ -154,6 +197,14 @@
                   class="ml-2 block text-sm text-gray-900"
                   >Trendlinie anzeigen</label
                 >
+                <select
+                  id="trend-select"
+                  aria-label="Trendart"
+                  class="ml-3 p-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                >
+                  <option value="linear">Linear</option>
+                  <option value="loess">LOESS</option>
+                </select>
               </div>
             </div>
           </div>
@@ -269,7 +320,16 @@
           "measurement-toggles"
         );
         const aggregationSelect = document.getElementById("aggregation-select");
+        const monthFilterContainer = document.getElementById(
+          "month-filter-container"
+        );
+        const monthFilter = document.getElementById("month-filter");
+        const seasonFilterContainer = document.getElementById(
+          "season-filter-container"
+        );
+        const seasonFilter = document.getElementById("season-filter");
         const regressionToggle = document.getElementById("regression-toggle");
+        const trendSelect = document.getElementById("trend-select");
         const regressionInfoContainer =
           document.getElementById("regression-info");
         const chartCanvas = document.getElementById("weather-chart");
@@ -289,6 +349,17 @@
           const currentYear = new Date().getFullYear();
           startDateInput.value = `${currentYear}-01-01`;
           endDateInput.value = `${currentYear}-12-31`;
+        }
+
+        function updatePeriodFilterControls() {
+          const aggregation = aggregationSelect.value;
+          const showMonthFilter = aggregation === "monthly";
+          const showSeasonFilter = aggregation === "seasonal";
+
+          monthFilterContainer.classList.toggle("hidden", !showMonthFilter);
+          seasonFilterContainer.classList.toggle("hidden", !showSeasonFilter);
+          monthFilter.disabled = !showMonthFilter;
+          seasonFilter.disabled = !showSeasonFilter;
         }
 
         // Configuration for weather measurements in German
@@ -519,6 +590,11 @@
           const endDate = new Date(endDateInput.value);
           const aggregation = aggregationSelect.value;
           const showRegression = regressionToggle.checked;
+          const trendType = trendSelect.value;
+          const periodFilters = {
+            month: monthFilter.value,
+            season: seasonFilter.value,
+          };
 
           const selectedMeasurements = Array.from(
             document.querySelectorAll("#measurement-toggles input:checked")
@@ -549,15 +625,18 @@
               timeData,
               measurementData,
               aggregation,
-              aggregationType
+              aggregationType,
+              periodFilters
             );
+
+            const chartData = aggregatedTime.map((t, i) => ({
+              x: t,
+              y: aggregatedData[i],
+            }));
 
             datasets.push({
               label: measurementConfig[key].label,
-              data: aggregatedTime.map((t, i) => ({
-                x: t,
-                y: aggregatedData[i],
-              })),
+              data: chartData,
               borderColor: measurementConfig[key].color,
               backgroundColor: measurementConfig[key].color.replace(
                 "1)",
@@ -566,32 +645,40 @@
               yAxisID: measurementConfig[key].yAxisID,
               tension: 0.1,
               pointRadius: aggregation === "daily" ? 2 : 4,
+              isTrend: false,
             });
 
             if (showRegression && aggregatedData.length > 1) {
-              const { line, slope, intercept } = calculateLinearRegression(
+              const trend = calculateTrendLine(
                 aggregatedTime,
-                aggregatedData
+                aggregatedData,
+                trendType
               );
-              datasets.push({
-                label: `${measurementConfig[key].label} (Trend)`,
-                data: line,
-                borderColor: measurementConfig[key].color.replace("1)", "0.5)"),
-                borderDash: [5, 5],
-                yAxisID: measurementConfig[key].yAxisID,
-                pointRadius: 0,
-                fill: false,
-              });
+              if (trend.line.length > 1) {
+                datasets.push({
+                  label: `${measurementConfig[key].label} (${trend.label})`,
+                  data: trend.line,
+                  borderColor: measurementConfig[key].color.replace("1)", "0.5)"),
+                  borderDash: trendType === "loess" ? [] : [5, 5],
+                  yAxisID: measurementConfig[key].yAxisID,
+                  pointRadius: 0,
+                  fill: false,
+                  isTrend: true,
+                });
 
-              // Display regression parameters
-              const infoP = document.createElement("p");
-              const delta = line[1].y - line[0].y;
-              infoP.innerHTML = `<strong>${
-                measurementConfig[key].label
-              } Trend</strong> : von ${line[0].y.toFixed(
-                2
-              )} nach ${line[1].y.toFixed(2)} (Differenz ${delta.toFixed(2)})`;
-              regressionInfoContainer.appendChild(infoP);
+                const firstPoint = trend.line[0];
+                const lastPoint = trend.line[trend.line.length - 1];
+                const infoP = document.createElement("p");
+                const delta = lastPoint.y - firstPoint.y;
+                infoP.innerHTML = `<strong>${
+                  measurementConfig[key].label
+                } ${trend.label}</strong> : von ${firstPoint.y.toFixed(
+                  2
+                )} nach ${lastPoint.y.toFixed(
+                  2
+                )} (Differenz ${delta.toFixed(2)})`;
+                regressionInfoContainer.appendChild(infoP);
+              }
             }
           });
 
@@ -600,6 +687,7 @@
           let timeUnit = "day";
           if (aggregation === "weekly") timeUnit = "week";
           if (aggregation === "monthly") timeUnit = "month";
+          if (aggregation === "seasonal") timeUnit = "month";
           if (aggregation === "yearly") timeUnit = "year";
 
           weatherChart.options.scales.x.time.unit = timeUnit;
@@ -609,7 +697,13 @@
         /**
          * Aggregates data based on the selected period and aggregation type.
          */
-        function aggregateData(times, values, period, aggregationType = "avg") {
+        function aggregateData(
+          times,
+          values,
+          period,
+          aggregationType = "avg",
+          filters = {}
+        ) {
           if (period === "daily") {
             return { aggregatedTime: times, aggregatedData: values };
           }
@@ -617,19 +711,46 @@
           const aggregated = {};
 
           times.forEach((time, index) => {
+            const value = values[index];
+            if (!Number.isFinite(value)) return;
+
             let key;
+            let groupTime = time;
             if (period === "weekly") {
               const startOfWeek = new Date(time);
               startOfWeek.setHours(0, 0, 0, 0);
               startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
               key = startOfWeek.toISOString().split("T")[0];
+              groupTime = startOfWeek;
             } else if (period === "monthly") {
+              if (
+                filters.month !== undefined &&
+                filters.month !== "" &&
+                time.getMonth() !== Number(filters.month)
+              ) {
+                return;
+              }
               key = `${time.getFullYear()}-${String(
                 time.getMonth() + 1
               ).padStart(2, "0")}`;
+              groupTime = new Date(time.getFullYear(), time.getMonth(), 15);
+            } else if (period === "seasonal") {
+              const season = getSeasonGroup(time);
+              if (
+                filters.season !== undefined &&
+                filters.season !== "" &&
+                season.name !== filters.season
+              ) {
+                return;
+              }
+              key = season.key;
+              groupTime = season.time;
             } else if (period === "yearly") {
               key = time.getFullYear().toString();
+              groupTime = new Date(time.getFullYear(), 6, 1);
             }
+
+            if (!key) return;
 
             if (!aggregated[key]) {
               aggregated[key] = {
@@ -637,11 +758,10 @@
                 count: 0,
                 min: Infinity,
                 max: -Infinity,
-                time: time,
+                time: groupTime,
               };
             }
 
-            const value = values[index];
             aggregated[key].sum += value;
             aggregated[key].count++;
             if (value < aggregated[key].min) aggregated[key].min = value;
@@ -651,57 +771,213 @@
           const aggregatedTime = [];
           const aggregatedData = [];
 
-          for (const key in aggregated) {
-            aggregatedTime.push(aggregated[key].time);
+          const rows = Object.values(aggregated).sort(
+            (a, b) => a.time - b.time
+          );
+
+          rows.forEach((row) => {
+            aggregatedTime.push(row.time);
             switch (aggregationType) {
               case "sum":
-                aggregatedData.push(aggregated[key].sum);
+                aggregatedData.push(row.sum);
                 break;
               case "min":
-                aggregatedData.push(aggregated[key].min);
+                aggregatedData.push(row.min);
                 break;
               case "max":
-                aggregatedData.push(aggregated[key].max);
+                aggregatedData.push(row.max);
                 break;
               case "avg":
               default:
-                aggregatedData.push(
-                  aggregated[key].sum / aggregated[key].count
-                );
+                aggregatedData.push(row.sum / row.count);
                 break;
             }
-          }
+          });
 
           return { aggregatedTime, aggregatedData };
+        }
+
+        function getSeasonGroup(time) {
+          const year = time.getFullYear();
+          const month = time.getMonth();
+
+          if (month === 11) {
+            return {
+              name: "winter",
+              key: `${year + 1}-winter`,
+              time: new Date(year + 1, 0, 15),
+            };
+          }
+          if (month <= 1) {
+            return {
+              name: "winter",
+              key: `${year}-winter`,
+              time: new Date(year, 0, 15),
+            };
+          }
+          if (month <= 4) {
+            return {
+              name: "spring",
+              key: `${year}-spring`,
+              time: new Date(year, 3, 15),
+            };
+          }
+          if (month <= 7) {
+            return {
+              name: "summer",
+              key: `${year}-summer`,
+              time: new Date(year, 6, 15),
+            };
+          }
+          return {
+            name: "autumn",
+            key: `${year}-autumn`,
+            time: new Date(year, 9, 15),
+          };
         }
 
         /**
          * Calculates a simple linear regression and returns its parameters.
          */
         function calculateLinearRegression(xValues, yValues) {
-          const n = xValues.length;
+          const points = xValues
+            .map((x, index) => ({
+              x,
+              numericX: x.getTime(),
+              y: yValues[index],
+            }))
+            .filter(
+              (point) =>
+                Number.isFinite(point.numericX) && Number.isFinite(point.y)
+            );
+
+          const n = points.length;
+          if (n < 2) return { line: [], slope: 0, intercept: 0 };
+
           let sumX = 0,
             sumY = 0,
             sumXY = 0,
             sumXX = 0;
-          const numericX = xValues.map((d) => d.getTime());
+          const offsetX = points[0].numericX;
 
           for (let i = 0; i < n; i++) {
-            sumX += numericX[i];
-            sumY += yValues[i];
-            sumXY += numericX[i] * yValues[i];
-            sumXX += numericX[i] * numericX[i];
+            const numericX = points[i].numericX - offsetX;
+            sumX += numericX;
+            sumY += points[i].y;
+            sumXY += numericX * points[i].y;
+            sumXX += numericX * numericX;
           }
 
-          const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+          const denominator = n * sumXX - sumX * sumX;
+          if (Math.abs(denominator) <= Number.EPSILON) {
+            const average = sumY / n;
+            return {
+              line: [
+                { x: points[0].x, y: average },
+                { x: points[n - 1].x, y: average },
+              ],
+              slope: 0,
+              intercept: average,
+            };
+          }
+
+          const slope = (n * sumXY - sumX * sumY) / denominator;
           const intercept = (sumY - slope * sumX) / n;
 
           const line = [
-            { x: xValues[0], y: slope * numericX[0] + intercept },
-            { x: xValues[n - 1], y: slope * numericX[n - 1] + intercept },
+            { x: points[0].x, y: intercept },
+            {
+              x: points[n - 1].x,
+              y: slope * (points[n - 1].numericX - offsetX) + intercept,
+            },
           ];
 
           return { line, slope, intercept };
+        }
+
+        function calculateTrendLine(xValues, yValues, trendType) {
+          if (trendType === "loess") {
+            return {
+              line: calculateLoessTrend(xValues, yValues),
+              label: "LOESS-Trend",
+            };
+          }
+
+          return {
+            line: calculateLinearRegression(xValues, yValues).line,
+            label: "Linearer Trend",
+          };
+        }
+
+        function calculateLoessTrend(xValues, yValues) {
+          const points = xValues
+            .map((x, index) => ({
+              x,
+              numericX: x.getTime(),
+              y: yValues[index],
+            }))
+            .filter(
+              (point) =>
+                Number.isFinite(point.numericX) && Number.isFinite(point.y)
+            );
+
+          const n = points.length;
+          if (n < 2) return [];
+
+          const windowSize = Math.min(
+            n,
+            Math.max(3, Math.min(301, Math.ceil(n * 0.3)))
+          );
+          const halfWindow = Math.floor(windowSize / 2);
+
+          return points.map((point, index) => {
+            const start = Math.min(
+              Math.max(0, index - halfWindow),
+              n - windowSize
+            );
+            const end = start + windowSize;
+            let maxDistance = 0;
+
+            for (let i = start; i < end; i++) {
+              maxDistance = Math.max(
+                maxDistance,
+                Math.abs(points[i].numericX - point.numericX)
+              );
+            }
+
+            let sumW = 0;
+            let sumX = 0;
+            let sumY = 0;
+            let sumXX = 0;
+            let sumXY = 0;
+
+            for (let i = start; i < end; i++) {
+              const centeredX = points[i].numericX - point.numericX;
+              const distance = Math.abs(centeredX);
+              const scaledDistance =
+                maxDistance === 0 ? 0 : distance / maxDistance;
+              const weight = Math.pow(
+                1 - Math.pow(Math.min(scaledDistance, 1), 3),
+                3
+              );
+
+              sumW += weight;
+              sumX += weight * centeredX;
+              sumY += weight * points[i].y;
+              sumXX += weight * centeredX * centeredX;
+              sumXY += weight * centeredX * points[i].y;
+            }
+
+            const denominator = sumW * sumXX - sumX * sumX;
+            let y = sumW === 0 ? point.y : sumY / sumW;
+
+            if (Math.abs(denominator) > Number.EPSILON) {
+              const slope = (sumW * sumXY - sumX * sumY) / denominator;
+              y = (sumY - slope * sumX) / sumW;
+            }
+
+            return { x: point.x, y };
+          });
         }
 
         /**
@@ -805,7 +1081,7 @@
           const dataByDate = {};
           const headers = ["Datum"];
           const activeDatasets = weatherChart.data.datasets.filter(
-            (ds) => !ds.label.includes("(Trend)")
+            (ds) => !ds.isTrend
           );
 
           activeDatasets.forEach((ds) => {
@@ -853,14 +1129,21 @@
         );
         startDateInput.addEventListener("change", updateChart);
         endDateInput.addEventListener("change", updateChart);
-        aggregationSelect.addEventListener("change", updateChart);
+        aggregationSelect.addEventListener("change", () => {
+          updatePeriodFilterControls();
+          updateChart();
+        });
+        monthFilter.addEventListener("change", updateChart);
+        seasonFilter.addEventListener("change", updateChart);
         regressionToggle.addEventListener("change", updateChart);
+        trendSelect.addEventListener("change", updateChart);
         measurementTogglesContainer.addEventListener("change", updateChart);
         downloadCsvBtn.addEventListener("click", downloadCSV);
         downloadPngBtn.addEventListener("click", downloadPNG);
 
         // Initial setup
         setCurrentYearDateRange();
+        updatePeriodFilterControls();
         createMeasurementToggles();
         initializeChart();
         populateCities();
