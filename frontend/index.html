@@ -97,7 +97,6 @@
                 type="date"
                 id="start-date"
                 min="1951-01-01"
-                value="2025-01-01"
                 class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
             </div>
@@ -111,7 +110,6 @@
                 type="date"
                 id="end-date"
                 min="1951-01-01"
-                value="2025-12-31"
                 class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
             </div>
@@ -286,6 +284,12 @@
         let weatherChart;
         let allData = {};
         let citiesData = [];
+
+        function setCurrentYearDateRange() {
+          const currentYear = new Date().getFullYear();
+          startDateInput.value = `${currentYear}-01-01`;
+          endDateInput.value = `${currentYear}-12-31`;
+        }
 
         // Configuration for weather measurements in German
         const measurementConfig = {
@@ -856,6 +860,7 @@
         downloadPngBtn.addEventListener("click", downloadPNG);
 
         // Initial setup
+        setCurrentYearDateRange();
         createMeasurementToggles();
         initializeChart();
         populateCities();
