@@ -152,6 +152,10 @@
             <div id="message-area" class="text-center text-red-500 mt-4 font-medium"></div>
             <!-- Regression Info Section -->
             <div id="regression-info" class="mt-4 text-sm text-gray-600"></div>
+            <div id="forecast-attribution" class="mt-2 text-xs text-gray-500 hidden">
+                Vorhersagedaten:
+                <a href="https://open-meteo.com/" target="_blank" class="text-blue-600 hover:underline">Open-Meteo.com</a>
+            </div>
         </div>
 
         <!-- Download Buttons -->
@@ -186,6 +190,7 @@
         const regressionToggle = document.getElementById('regression-toggle');
         const trendSelect = document.getElementById('trend-select');
         const regressionInfoContainer = document.getElementById('regression-info');
+        const forecastAttribution = document.getElementById('forecast-attribution');
         const chartCanvas = document.getElementById('weather-chart');
         const loader = document.getElementById('loader');
         const messageArea = document.getElementById('message-area');
@@ -198,12 +203,34 @@
         let weatherChart;
         let allData1 = {};
         let allData2 = {};
+        let forecastData1 = {};
+        let forecastData2 = {};
         let citiesData = [];
 
-        function setCurrentYearDateRange() {
-            const currentYear = new Date().getFullYear();
-            startDateInput.value = `${currentYear}-01-01`;
-            endDateInput.value = `${currentYear}-12-31`;
+        function formatDateInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function addDays(date, days) {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        function parseDateInput(value, endOfDay = false) {
+            const [year, month, day] = value.split('-').map(Number);
+            const date = new Date(year, month - 1, day);
+            if (endOfDay) date.setHours(23, 59, 59, 999);
+            return date;
+        }
+
+        function setDefaultDateRange() {
+            const today = new Date();
+            startDateInput.value = formatDateInput(addDays(today, -14));
+            endDateInput.value = formatDateInput(addDays(today, 14));
         }
 
         function updatePeriodFilterControls() {
@@ -243,6 +270,35 @@
                 messageArea.textContent = `Daten konnten von ${url} nicht geladen werden.`;
                 return null;
             }
+        }
+
+        async function loadForecastData(lon, lat) {
+            const params = new URLSearchParams({
+                latitude: (lat / 100).toFixed(2),
+                longitude: (lon / 100).toFixed(2),
+                daily: 'temperature_2m_mean,temperature_2m_max,temperature_2m_min,precipitation_sum,relative_humidity_2m_mean',
+                timezone: 'Europe/Berlin',
+                forecast_days: '16',
+            });
+            const data = await fetchData(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+
+            if (!data || data instanceof Response || !data.daily) {
+                console.warn('Open-Meteo-Vorhersage konnte nicht geladen werden.');
+                return {};
+            }
+
+            return normalizeForecastData(data.daily);
+        }
+
+        function normalizeForecastData(daily) {
+            return {
+                time: (daily.time || []).map(date => parseDateInput(date)),
+                tas: daily.temperature_2m_mean || [],
+                tasmax: daily.temperature_2m_max || [],
+                tasmin: daily.temperature_2m_min || [],
+                pr: daily.precipitation_sum || [],
+                hurs: daily.relative_humidity_2m_mean || [],
+            };
         }
 
         /**
@@ -295,6 +351,8 @@
 
             allData1 = result1.data;
             allData2 = result2.data;
+            forecastData1 = result1.forecastData;
+            forecastData2 = result2.forecastData;
 
             if (result1.lon && result1.lat) {
                 const city1Name = encodeURIComponent(result1.city);
@@ -334,7 +392,8 @@
                     if (response.ok) {
                         console.log(`Erfolg: Daten für ${city.city} geladen bei lon=${attempt.lon}, lat=${attempt.lat}`);
                         const data = await response.json();
-                        return { data: data, lon: attempt.lon, lat: attempt.lat, city: city.city };
+                        const forecastData = await loadForecastData(attempt.lon, attempt.lat);
+                        return { data: data, forecastData, lon: attempt.lon, lat: attempt.lat, city: city.city };
                     }
                 } catch (error) {
                     console.error(`Fehler beim Laden von ${dataUrl}:`, error);
@@ -342,7 +401,7 @@
             }
 
             messageArea.textContent += ` Wetterdaten für ${city.city} oder nahegelegene Koordinaten konnten nicht gefunden werden.`;
-            return { data: {}, lon: null, lat: null, city: city.city };
+            return { data: {}, forecastData: {}, lon: null, lat: null, city: city.city };
         }
 
         /**
@@ -382,11 +441,11 @@
          * Updates the chart based on the current user selections.
          */
         function updateChart() {
-            if ((!allData1.time && !allData2.time) || !weatherChart) return;
+            if ((!allData1.time && !allData2.time && !forecastData1.time && !forecastData2.time) || !weatherChart) return;
 
             regressionInfoContainer.innerHTML = ''; // Clear regression info
-            const startDate = new Date(startDateInput.value);
-            const endDate = new Date(endDateInput.value);
+            const startDate = parseDateInput(startDateInput.value);
+            const endDate = parseDateInput(endDateInput.value, true);
             const aggregation = aggregationSelect.value;
             const showRegression = regressionToggle.checked;
             const trendType = trendSelect.value;
@@ -398,55 +457,50 @@
             const selectedMeasurements = Array.from(document.querySelectorAll('#measurement-toggles input:checked')).map(cb => cb.value);
 
             const datasets = [];
+            let hasForecastDataset = false;
             const city1Name = citySelect1.options[citySelect1.selectedIndex].text;
             const city2Name = citySelect2.options[citySelect2.selectedIndex].text;
+            const citySeries = [
+                { historical: allData1, forecast: forecastData1, name: city1Name, color: 'rgba(255, 0, 0, 1)' },
+                { historical: allData2, forecast: forecastData2, name: city2Name, color: 'rgba(54, 162, 235, 1)' },
+            ];
 
-            [allData1, allData2].forEach((allData, index) => {
-                if (!allData.time) return;
-
-                const cityName = index === 0 ? city1Name : city2Name;
-                const filteredIndices = allData.time.map((ts, index) => {
-                    const date = new Date(ts / 1_000_000);
-                    return (date >= startDate && date <= endDate) ? index : -1;
-                }).filter(index => index !== -1);
-
-                const timeData = filteredIndices.map(i => new Date(allData.time[i] / 1_000_000));
-
+            citySeries.forEach(city => {
                 selectedMeasurements.forEach(key => {
-                    const measurementData = filteredIndices.map(i => allData[key][i]);
-
                     let aggregationType = 'avg';
                     if (key === 'pr') aggregationType = 'sum';
                     else if (key === 'tasmax') aggregationType = 'max';
                     else if (key === 'tasmin') aggregationType = 'min';
 
-                    const { aggregatedTime, aggregatedData } = aggregateData(timeData, measurementData, aggregation, aggregationType, periodFilters);
+                    const historicalSeries = getFilteredSeries(city.historical, key, startDate, endDate, value => new Date(value / 1_000_000));
+                    const historical = aggregateData(historicalSeries.times, historicalSeries.values, aggregation, aggregationType, periodFilters);
 
-                    const newColor = index === 0 ? 'rgba(255, 0, 0, 1)' : 'rgba(54, 162, 235, 1)'; // City 1: Red, City 2: Blue
-                    const chartData = aggregatedTime.map((t, i) => ({ x: t, y: aggregatedData[i] }));
+                    if (historical.aggregatedData.length) {
+                        datasets.push({
+                            label: `${measurementConfig[key].label} ${city.name}`,
+                            data: toChartData(historical.aggregatedTime, historical.aggregatedData),
+                            borderColor: city.color,
+                            backgroundColor: city.color.replace('1)', '0.2)'),
+                            yAxisID: measurementConfig[key].yAxisID,
+                            tension: 0.1,
+                            pointRadius: aggregation === 'daily' ? 2 : 4,
+                            isForecast: false,
+                            isTrend: false,
+                        });
+                    }
 
-                    datasets.push({
-                        label: `${measurementConfig[key].label} ${cityName}`,
-                        data: chartData,
-                        borderColor: newColor,
-                        backgroundColor: newColor.replace('1)', '0.2)'),
-                        yAxisID: measurementConfig[key].yAxisID,
-                        tension: 0.1,
-                        pointRadius: aggregation === 'daily' ? 2 : 4,
-                        isTrend: false,
-                    });
-
-                    if (showRegression && aggregatedData.length > 1) {
-                        const trend = calculateTrendLine(aggregatedTime, aggregatedData, trendType);
+                    if (showRegression && historical.aggregatedData.length > 1) {
+                        const trend = calculateTrendLine(historical.aggregatedTime, historical.aggregatedData, trendType);
                         if (trend.line.length > 1) {
                             datasets.push({
-                                label: `${measurementConfig[key].label} ${cityName} (${trend.label})`,
+                                label: `${measurementConfig[key].label} ${city.name} (${trend.label})`,
                                 data: trend.line,
-                                borderColor: newColor,
+                                borderColor: city.color,
                                 borderDash: trendType === 'loess' ? [] : [2, 2],
                                 yAxisID: measurementConfig[key].yAxisID,
                                 pointRadius: 0,
                                 fill: false,
+                                isForecast: false,
                                 isTrend: true,
                             });
 
@@ -454,14 +508,35 @@
                             const lastPoint = trend.line[trend.line.length - 1];
                             const infoP = document.createElement('p');
                             const delta = lastPoint.y - firstPoint.y;
-                            infoP.innerHTML = `<strong>${measurementConfig[key].label} ${trend.label} ${cityName}</strong> : von ${firstPoint.y.toFixed(2)} nach ${lastPoint.y.toFixed(2)} (Differenz ${delta.toFixed(2)})`;
+                            infoP.innerHTML = `<strong>${measurementConfig[key].label} ${trend.label} ${city.name}</strong> : von ${firstPoint.y.toFixed(2)} nach ${lastPoint.y.toFixed(2)} (Differenz ${delta.toFixed(2)})`;
                             regressionInfoContainer.appendChild(infoP);
                         }
+                    }
+
+                    const forecastSeries = getFilteredSeries(city.forecast, key, startDate, endDate, value => value);
+                    const forecast = aggregateData(forecastSeries.times, forecastSeries.values, aggregation, aggregationType, periodFilters);
+
+                    if (forecast.aggregatedData.length) {
+                        hasForecastDataset = true;
+                        datasets.push({
+                            label: `${measurementConfig[key].label} ${city.name} (Open-Meteo-Vorhersage)`,
+                            data: toChartData(forecast.aggregatedTime, forecast.aggregatedData),
+                            borderColor: city.color.replace('1)', '0.75)'),
+                            backgroundColor: city.color.replace('1)', '0.12)'),
+                            borderDash: [6, 4],
+                            yAxisID: measurementConfig[key].yAxisID,
+                            tension: 0.1,
+                            pointRadius: aggregation === 'daily' ? 2 : 4,
+                            fill: false,
+                            isForecast: true,
+                            isTrend: false,
+                        });
                     }
                 });
             });
 
             weatherChart.data.datasets = datasets;
+            forecastAttribution.classList.toggle('hidden', !hasForecastDataset);
 
             let timeUnit = 'day';
             if (aggregation === 'weekly') timeUnit = 'week';
@@ -471,6 +546,27 @@
 
             weatherChart.options.scales.x.time.unit = timeUnit;
             weatherChart.update();
+        }
+
+        function getFilteredSeries(data, key, startDate, endDate, convertTime) {
+            if (!data.time || !data[key]) return { times: [], values: [] };
+
+            const times = [];
+            const values = [];
+
+            data.time.forEach((rawTime, index) => {
+                const date = convertTime(rawTime);
+                if (date >= startDate && date <= endDate) {
+                    times.push(date);
+                    values.push(Number(data[key][index]));
+                }
+            });
+
+            return { times, values };
+        }
+
+        function toChartData(times, values) {
+            return times.map((time, index) => ({ x: time, y: values[index] }));
         }
 
         /**
@@ -705,8 +801,12 @@
                 "(c) klima1951.de auf Basis der Hydrometeorologische Rasterdaten (HYRAS) des Deutschen Wetterdienstes (DWD)",
                 "Open Data & Open Source http://github.com/volzinnovation/klima1951.de/ erstellt von @volz_fw"
             ];
+            if (weatherChart.data.datasets.some(dataset => dataset.isForecast)) {
+                footerLines.splice(1, 0, "Vorhersagedaten: Open-Meteo.com");
+            }
             const titleHeight = 40;
-            const footerHeight = 40;
+            const footerLineHeight = 12;
+            const footerHeight = footerLines.length * footerLineHeight + 16;
             const originalCanvas = weatherChart.canvas;
 
             const tempCanvas = document.createElement('canvas');
@@ -733,8 +833,9 @@
             tempCtx.font = '10px Inter, sans-serif';
             tempCtx.textAlign = 'center';
 
-            tempCtx.fillText(footerLines[0], tempCanvas.width / 2, tempCanvas.height - 20);
-            tempCtx.fillText(footerLines[1], tempCanvas.width / 2, tempCanvas.height - 8);
+            footerLines.forEach((line, index) => {
+                tempCtx.fillText(line, tempCanvas.width / 2, tempCanvas.height - footerHeight + 12 + index * footerLineHeight);
+            });
 
             const link = document.createElement('a');
             link.href = tempCanvas.toDataURL('image/png');
@@ -804,7 +905,7 @@
         downloadPngBtn.addEventListener('click', downloadPNG);
 
         // Initial setup
-        setCurrentYearDateRange();
+        setDefaultDateRange();
         updatePeriodFilterControls();
         createMeasurementToggles();
         initializeChart();
