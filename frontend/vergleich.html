@@ -152,10 +152,6 @@
             <div id="message-area" class="text-center text-red-500 mt-4 font-medium"></div>
             <!-- Regression Info Section -->
             <div id="regression-info" class="mt-4 text-sm text-gray-600"></div>
-            <div id="forecast-attribution" class="mt-2 text-xs text-gray-500 hidden">
-                Vorhersagedaten:
-                <a href="https://open-meteo.com/" target="_blank" class="text-blue-600 hover:underline">Open-Meteo.com</a>
-            </div>
         </div>
 
         <!-- Download Buttons -->
@@ -170,7 +166,7 @@
 </div>
 
 <footer class="text-center p-4 text-xs text-gray-500">
-    <p>Open Data: (c) <a target="_blank" class="text-blue-600 hover:underline"  href="https://www.dwd.de/DE/leistungen/hyras/hyras.html">DWD HYRAS</a>. Code: <a target="_blank" class="text-blue-600 hover:underline" href="https://github.com/volzinnovation/klima1951.de/">Open Source</a></p>
+    <p>Open Data: (c) <a target="_blank" class="text-blue-600 hover:underline"  href="https://www.dwd.de/DE/leistungen/hyras/hyras.html">DWD HYRAS</a>. Vorhersagedaten: <a href="https://open-meteo.com/" target="_blank" class="text-blue-600 hover:underline">Open-Meteo.com</a>. Code: <a target="_blank" class="text-blue-600 hover:underline" href="https://github.com/volzinnovation/klima1951.de/">Open Source</a></p>
     <p>(c) 2025 <a href="https://www.raphaelvolz.de/" target="_blank" class="text-blue-600 hover:underline">Prof. Dr. Raphael Volz</a> (<a href="https://www.hs-pforzheim.de/" target="_blank" class="text-blue-600 hover:underline">Hochschule Pforzheim</a>)</p>
 </footer>
 
@@ -190,7 +186,6 @@
         const regressionToggle = document.getElementById('regression-toggle');
         const trendSelect = document.getElementById('trend-select');
         const regressionInfoContainer = document.getElementById('regression-info');
-        const forecastAttribution = document.getElementById('forecast-attribution');
         const chartCanvas = document.getElementById('weather-chart');
         const loader = document.getElementById('loader');
         const messageArea = document.getElementById('message-area');
@@ -457,7 +452,6 @@
             const selectedMeasurements = Array.from(document.querySelectorAll('#measurement-toggles input:checked')).map(cb => cb.value);
 
             const datasets = [];
-            let hasForecastDataset = false;
             const city1Name = citySelect1.options[citySelect1.selectedIndex].text;
             const city2Name = citySelect2.options[citySelect2.selectedIndex].text;
             const citySeries = [
@@ -517,7 +511,6 @@
                     const forecast = aggregateData(forecastSeries.times, forecastSeries.values, aggregation, aggregationType, periodFilters);
 
                     if (forecast.aggregatedData.length) {
-                        hasForecastDataset = true;
                         datasets.push({
                             label: `${measurementConfig[key].label} ${city.name} (Open-Meteo-Vorhersage)`,
                             data: toChartData(forecast.aggregatedTime, forecast.aggregatedData),
@@ -536,7 +529,6 @@
             });
 
             weatherChart.data.datasets = datasets;
-            forecastAttribution.classList.toggle('hidden', !hasForecastDataset);
 
             let timeUnit = 'day';
             if (aggregation === 'weekly') timeUnit = 'week';
