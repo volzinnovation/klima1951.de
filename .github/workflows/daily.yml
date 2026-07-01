@@ -50,6 +50,9 @@ jobs:
           python ../etl/create_stats.py --years full --overwrite
         working-directory: data
 
+      - name: Print read-only data status
+        run: python etl/data_status.py --format json
+
       - name: Commit and push changes
         env:
           PAT_TOKEN: ${{ secrets.DAILY_PAT }}

@@ -15,6 +15,20 @@ Das Verzeichnis frontend wird auf [https://klima1951.de/](https://klima1951.de/)
 
 Die Daten werden täglich aktualisiert, dies erledigt der Workflow [daily.yml](https://github.com/volzinnovation/klima1951.de/blob/main/.github/workflows/daily.yml).
 
+## Lokaler Datenstatus
+
+Der aktuelle Stand der lokalen HYRAS-Dateien und der generierten Orts-JSONs kann
+ohne ETL-Neulauf geprueft werden:
+
+```bash
+python etl/data_status.py
+python etl/data_status.py --format json
+```
+
+Der Bericht zaehlt konfigurierte Orte, vorhandene `all-years.json`- und
+`stats.csv`-Dateien, den Statistik-Jahresbereich und die vorhandenen NetCDF-
+Quellen je Messgroesse.
+
 [Mehr zur Motivation auf meinem Blog.](https://www.volz-fw.de/p/es-ist-sommer)
 
 --
