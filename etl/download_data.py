@@ -7,11 +7,30 @@ import requests
 import argparse
 import datetime
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 BASE_PATTERN = "v6-1_de.nc"
+REQUEST_TIMEOUT = (10, 120)
+
+
+def build_session():
+  retry = Retry(
+    total=3,
+    connect=3,
+    read=3,
+    backoff_factor=2,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET"],
+  )
+  session = requests.Session()
+  session.mount("https://", HTTPAdapter(max_retries=retry))
+  session.mount("http://", HTTPAdapter(max_retries=retry))
+  return session
+
 # path ="../../data/hyras/"
 
-def download(url, year_filter):
+def download(session, url, year_filter):
   """
   Downloads files from a given URL based on a year filter.
 
@@ -31,7 +50,7 @@ def download(url, year_filter):
   print(f"Searching for files ending with '{file_pattern}' in {url}")
 
   # Fetch the content of the directory listing page
-  response = requests.get(url)
+  response = session.get(url, timeout=REQUEST_TIMEOUT)
   response.raise_for_status() # Raise an exception for bad status codes
 
   # Parse the HTML content
@@ -50,7 +69,7 @@ def download(url, year_filter):
     file_url = url + filename
     print(f"Downloading {filename}...")
     try:
-      file_response = requests.get(file_url, stream=True)
+      file_response = session.get(file_url, stream=True, timeout=REQUEST_TIMEOUT)
       file_response.raise_for_status()
 
       with open(filename, 'wb') as f:
@@ -74,8 +93,9 @@ def main():
           "https://opendata.dwd.de/climate_environment/CDC/grids_germany/daily/hyras_de/humidity/",
   ]
 
+  session = build_session()
   for url in urls:
-    download(url, args.year)
+    download(session, url, args.year)
 
 if __name__ == '__main__':
   main()
