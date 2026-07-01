@@ -101,6 +101,10 @@
     margin-top: 1.25rem;
 }
 
+.status-summary > .status-panel:first-child {
+    grid-row: span 2;
+}
+
 .status-panel {
     background: #ffffff;
     border: 1px solid #d9e2e7;
@@ -122,6 +126,36 @@
     gap: 0.9rem;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     margin-top: 1rem;
+}
+
+.freshness-grid {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0.9rem;
+}
+
+.freshness-stat {
+    background: #f7faf9;
+    border-left: 3px solid #16836f;
+    min-width: 0;
+    padding: 0.7rem 0.75rem;
+}
+
+.freshness-stat span {
+    color: #64727b;
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.freshness-stat strong {
+    color: #16242c;
+    display: block;
+    font-size: 1.3rem;
+    line-height: 1.1;
+    margin-top: 0.35rem;
 }
 
 .status-metric {
@@ -274,8 +308,13 @@
 @media (max-width: 860px) {
     .status-summary,
     .status-sections,
-    .status-grid {
+    .status-grid,
+    .freshness-grid {
         grid-template-columns: 1fr;
+    }
+
+    .status-summary > .status-panel:first-child {
+        grid-row: auto;
     }
 
     .status-topbar {

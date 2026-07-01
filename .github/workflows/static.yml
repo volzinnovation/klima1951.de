@@ -30,18 +30,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - name: Validate status payload
         run: |
           python -m json.tool frontend/data-status.json >/dev/null
+          python etl/data_status.py --format json --public --require-fresh > /tmp/data-status.generated.json
+          python - <<'PY'
+          import json
+
+          with open("frontend/data-status.json", encoding="utf-8") as handle:
+              payload = json.load(handle)
+
+          freshness = payload.get("freshness") or {}
+          required = {
+              "expected_latest_complete_year",
+              "stats_latest_complete_year",
+              "hyras_latest_complete_year",
+              "status",
+          }
+          missing = sorted(required - set(freshness))
+          if missing:
+              raise SystemExit(f"Missing freshness fields: {', '.join(missing)}")
+          if freshness["status"] != "ok":
+              raise SystemExit(f"Published freshness is not OK: {freshness['status']}")
+          PY
           test -f frontend/status.html
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           # Upload entire repository
           path: 'frontend'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

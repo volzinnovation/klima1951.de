@@ -93,6 +93,31 @@
           </div>
         </div>
 
+        <div class="status-panel status-freshness-panel">
+          <div class="status-panel-head">
+            <h2 class="status-panel-title">Datenaktualitaet</h2>
+            <span id="freshness-status" class="status-chip warn">Lade Daten</span>
+          </div>
+          <p id="freshness-detail" class="status-muted">
+            Prueft das erwartete vollstaendige Kalenderjahr.
+          </p>
+          <div class="freshness-grid">
+            <div class="freshness-stat">
+              <span>Erwartet</span>
+              <strong id="freshness-expected">...</strong>
+            </div>
+            <div class="freshness-stat">
+              <span>Stadt-CSV</span>
+              <strong id="freshness-stats">...</strong>
+            </div>
+            <div class="freshness-stat">
+              <span>HYRAS</span>
+              <strong id="freshness-hyras">...</strong>
+            </div>
+          </div>
+          <p id="freshness-note" class="status-metric-note"></p>
+        </div>
+
         <div class="status-panel">
           <h2 class="status-panel-title">Pruefungen</h2>
           <div id="checks-list" class="status-list"></div>

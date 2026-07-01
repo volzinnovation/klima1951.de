@@ -100,6 +100,35 @@ function renderOverview(payload) {
   document.getElementById("completion-fill").style.width = `${ratio}%`;
 }
 
+function renderFreshness(payload) {
+  const freshness = payload.freshness || {};
+  const status = statusLabels[freshness.status] ? freshness.status : "warn";
+  const statusElement = document.getElementById("freshness-status");
+  statusElement.className = `status-chip ${status}`;
+  statusElement.textContent = status === "ok" ? "Aktuell" : statusLabels[status];
+
+  text("freshness-detail", freshness.detail || "Noch keine Aktualitaetsdaten im Statuspayload.");
+  text("freshness-expected", freshness.expected_latest_complete_year || "n/a");
+  text("freshness-stats", freshness.stats_latest_complete_year || "n/a");
+  text("freshness-hyras", freshness.hyras_latest_complete_year || "n/a");
+
+  const staleMetrics = freshness.stale_hyras_metrics || [];
+  const filesBehind = freshness.stats_files_behind_expected_year || 0;
+  if (status === "ok") {
+    text("freshness-note", "Der aktuelle Jahrgang laeuft weiter; erwartet wird nur das letzte abgeschlossene Jahr.");
+    return;
+  }
+
+  const notes = [];
+  if (filesBehind > 0) {
+    notes.push(`${numberFormatter.format(filesBehind)} Stadt-CSV-Dateien hinter Erwartung`);
+  }
+  if (staleMetrics.length > 0) {
+    notes.push(`HYRAS: ${staleMetrics.join(", ")}`);
+  }
+  text("freshness-note", notes.join(" / ") || "Bitte ETL-Ausgabe pruefen.");
+}
+
 function renderChecks(payload) {
   const list = document.getElementById("checks-list");
   list.replaceChildren();
@@ -166,6 +195,7 @@ async function loadStatus() {
     }
     const payload = await response.json();
     renderOverview(payload);
+    renderFreshness(payload);
     renderChecks(payload);
     renderMetrics(payload);
     renderFiles(payload);

@@ -14,6 +14,11 @@
       "detail": "observed metrics: hurs, pr, tas, tasmax, tasmin; missing: none",
       "name": "hyras_metric_files_present",
       "status": "ok"
+    },
+    {
+      "detail": "Alle Stadt-Statistiken und HYRAS-Metriken reichen bis zum erwarteten vollstaendigen Jahr 2025.",
+      "name": "data_freshness",
+      "status": "ok"
     }
   ],
   "city_outputs": {
@@ -23,6 +28,10 @@
     "missing_city_outputs": 0,
     "missing_examples": [],
     "stats_files_with_years": 60,
+    "stats_latest_complete_year": 2025,
+    "stats_latest_year_counts": {
+      "2025": 60
+    },
     "stats_max_year": 2025,
     "stats_min_year": 1951
   },
@@ -34,7 +43,27 @@
       "path": "misc/cities.json"
     }
   },
-  "generated_at_utc": "2026-07-01T13:11:48.302757+00:00",
+  "freshness": {
+    "as_of_utc": "2026-07-01T15:03:46.639196+00:00",
+    "detail": "Alle Stadt-Statistiken und HYRAS-Metriken reichen bis zum erwarteten vollstaendigen Jahr 2025.",
+    "expected_latest_complete_year": 2025,
+    "freshness_grace_days": 45,
+    "hyras_latest_complete_year": 2025,
+    "hyras_metric_years": {
+      "hurs": 2025,
+      "pr": 2025,
+      "tas": 2025,
+      "tasmax": 2025,
+      "tasmin": 2025
+    },
+    "missing_hyras_metrics": [],
+    "stale_hyras_metrics": [],
+    "stats_files_behind_expected_year": 0,
+    "stats_files_checked": 60,
+    "stats_latest_complete_year": 2025,
+    "status": "ok"
+  },
+  "generated_at_utc": "2026-07-01T15:03:46.639196+00:00",
   "hyras": {
     "files": [
       {

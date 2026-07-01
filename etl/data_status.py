@@ -7,8 +7,8 @@ import argparse
 import csv
 import json
 import re
-from collections import defaultdict
-from datetime import datetime, timezone
+from collections import Counter, defaultdict
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +44,47 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Remove local filesystem roots from JSON output for public frontend use.",
     )
+    parser.add_argument(
+        "--as-of-date",
+        help=(
+            "UTC date or datetime used for freshness calculations. "
+            "Defaults to the current UTC time."
+        ),
+    )
+    parser.add_argument(
+        "--freshness-grace-days",
+        type=int,
+        default=45,
+        help=(
+            "Days after January 1 before the previous calendar year is required "
+            "as complete. Defaults to 45."
+        ),
+    )
+    parser.add_argument(
+        "--require-fresh",
+        action="store_true",
+        help="Exit with a non-zero status when the freshness check is not OK.",
+    )
     return parser.parse_args()
+
+
+def parse_as_of(value: str | None) -> datetime:
+    if not value:
+        return datetime.now(UTC)
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return datetime.combine(date.fromisoformat(value), time.min, UTC)
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC)
+
+
+def expected_complete_year(as_of: datetime, grace_days: int) -> int:
+    grace_days = max(0, grace_days)
+    year_cutover = datetime(as_of.year, 1, 1, tzinfo=UTC) + timedelta(days=grace_days)
+    if as_of < year_cutover:
+        return as_of.year - 2
+    return as_of.year - 1
 
 
 def load_cities(path: Path) -> list[dict[str, Any]]:
@@ -133,6 +173,8 @@ def summarize_city_outputs(root: Path, max_missing: int) -> dict[str, Any]:
         "missing_examples": missing,
         "stats_min_year": min(stats_earliest_years) if stats_earliest_years else None,
         "stats_max_year": max(stats_latest_years) if stats_latest_years else None,
+        "stats_latest_complete_year": min(stats_latest_years) if stats_latest_years else None,
+        "stats_latest_year_counts": dict(sorted(Counter(stats_latest_years).items())),
         "stats_files_with_years": len(stats_latest_years),
         "all_years_total_bytes": total_all_years_bytes,
     }
@@ -168,13 +210,91 @@ def summarize_hyras_files(root: Path) -> dict[str, Any]:
     }
 
 
-def build_status(root: Path, max_missing: int) -> dict[str, Any]:
+def build_freshness(
+    city_outputs: dict[str, Any],
+    hyras: dict[str, Any],
+    expected_metrics: set[str],
+    as_of: datetime,
+    grace_days: int,
+) -> dict[str, Any]:
+    expected_year = expected_complete_year(as_of, grace_days)
+    stats_year = city_outputs.get("stats_latest_complete_year")
+    stats_files_with_years = city_outputs.get("stats_files_with_years") or 0
+    latest_year_counts = city_outputs.get("stats_latest_year_counts") or {}
+    stats_files_behind = sum(
+        count
+        for year, count in latest_year_counts.items()
+        if int(year) < expected_year
+    )
+
+    metric_years = {
+        metric: summary.get("max_year")
+        for metric, summary in (hyras.get("metrics") or {}).items()
+        if isinstance(summary, dict)
+    }
+    missing_metrics = sorted(metric for metric in expected_metrics if metric not in metric_years)
+    stale_metrics = sorted(
+        metric
+        for metric in expected_metrics
+        if not metric_years.get(metric) or int(metric_years[metric]) < expected_year
+    )
+    present_expected_years = [
+        int(metric_years[metric])
+        for metric in expected_metrics
+        if metric_years.get(metric)
+    ]
+    hyras_year = min(present_expected_years) if present_expected_years else None
+
+    problems: list[str] = []
+    if stats_year is None:
+        problems.append("keine Stadt-Statistiken mit Jahreswerten gefunden")
+    elif int(stats_year) < expected_year:
+        problems.append(
+            f"Stadt-Statistiken reichen nur bis {stats_year}, erwartet ist {expected_year}"
+        )
+    if stale_metrics:
+        problems.append(
+            "HYRAS-Metriken hinter dem erwarteten Jahr: " + ", ".join(stale_metrics)
+        )
+
+    if problems:
+        status = (
+            "missing"
+            if stats_year is None or len(missing_metrics) == len(expected_metrics)
+            else "warn"
+        )
+        detail = "; ".join(problems)
+    else:
+        status = "ok"
+        detail = (
+            f"Alle Stadt-Statistiken und HYRAS-Metriken reichen bis zum "
+            f"erwarteten vollstaendigen Jahr {expected_year}."
+        )
+
+    return {
+        "as_of_utc": as_of.isoformat(),
+        "freshness_grace_days": max(0, grace_days),
+        "expected_latest_complete_year": expected_year,
+        "stats_latest_complete_year": stats_year,
+        "stats_files_checked": stats_files_with_years,
+        "stats_files_behind_expected_year": stats_files_behind,
+        "hyras_latest_complete_year": hyras_year,
+        "hyras_metric_years": metric_years,
+        "missing_hyras_metrics": missing_metrics,
+        "stale_hyras_metrics": stale_metrics,
+        "status": status,
+        "detail": detail,
+    }
+
+
+def build_status(root: Path, max_missing: int, as_of: datetime, grace_days: int) -> dict[str, Any]:
     root = root.resolve()
     city_outputs = summarize_city_outputs(root, max_missing)
     hyras = summarize_hyras_files(root)
     expected_metrics = {"hurs", "pr", "tas", "tasmax", "tasmin"}
     observed_metrics = set(hyras["metrics"])
     missing_metrics = expected_metrics - observed_metrics
+    freshness = build_freshness(city_outputs, hyras, expected_metrics, as_of, grace_days)
 
     checks = [
         {
@@ -200,13 +320,19 @@ def build_status(root: Path, max_missing: int) -> dict[str, Any]:
                 + (", ".join(sorted(missing_metrics)) if missing_metrics else "none")
             ),
         },
+        {
+            "name": "data_freshness",
+            "status": freshness["status"],
+            "detail": freshness["detail"],
+        },
     ]
 
     return {
-        "generated_at_utc": datetime.now(UTC).isoformat(),
+        "generated_at_utc": as_of.isoformat(),
         "root": str(root),
         "city_outputs": city_outputs,
         "hyras": hyras,
+        "freshness": freshness,
         "files": {
             "cities_json": file_status(root / "misc" / "cities.json"),
         },
@@ -255,6 +381,7 @@ def render_bytes(num_bytes: int) -> str:
 def render_markdown(status: dict[str, Any]) -> str:
     city = status["city_outputs"]
     hyras = status["hyras"]
+    freshness = status["freshness"]
     lines = [
         "# HYRAS Data Status",
         "",
@@ -265,6 +392,14 @@ def render_markdown(status: dict[str, Any]) -> str:
         f"- Stats year span: `{city['stats_min_year'] or 'n/a'}` to `{city['stats_max_year'] or 'n/a'}`",
         f"- all-years.json total size: `{render_bytes(city['all_years_total_bytes'])}`",
         f"- HYRAS NetCDF files: `{hyras['hyras_file_count']}`",
+        "",
+        "## Freshness",
+        "",
+        f"- Status: `{freshness['status']}`",
+        f"- Expected latest complete year: `{freshness['expected_latest_complete_year']}`",
+        f"- City statistics latest complete year: `{freshness['stats_latest_complete_year'] or 'n/a'}`",
+        f"- HYRAS latest complete year: `{freshness['hyras_latest_complete_year'] or 'n/a'}`",
+        f"- Detail: {freshness['detail']}",
         "",
         "## HYRAS Metrics",
         "",
@@ -292,13 +427,16 @@ def render_markdown(status: dict[str, Any]) -> str:
 
 def main() -> int:
     args = parse_args()
-    status = build_status(args.root, args.max_missing)
+    as_of = parse_as_of(args.as_of_date)
+    status = build_status(args.root, args.max_missing, as_of, args.freshness_grace_days)
     if args.public:
         scrub_local_paths(status, args.root)
     if args.format == "json":
         print(json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True))
     else:
         print(render_markdown(status), end="")
+    if args.require_fresh and status["freshness"]["status"] != "ok":
+        return 1
     return 0
 
 

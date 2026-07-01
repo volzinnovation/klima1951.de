@@ -25,11 +25,16 @@ ohne ETL-Neulauf geprueft werden:
 python etl/data_status.py
 python etl/data_status.py --format json
 python etl/data_status.py --format json --public > frontend/data-status.json
+python etl/data_status.py --format json --public --require-fresh > frontend/data-status.json
 ```
 
 Der Bericht zaehlt konfigurierte Orte, vorhandene `all-years.json`- und
 `stats.csv`-Dateien, den Statistik-Jahresbereich und die vorhandenen NetCDF-
-Quellen je Messgroesse.
+Quellen je Messgroesse. Die Frischepruefung erwartet, dass alle Stadt-
+Statistiken und alle HYRAS-Metriken mindestens bis zum letzten vollstaendig
+abgeschlossenen Kalenderjahr reichen. In den ersten 45 Tagen eines neuen Jahres
+gilt noch eine Schonfrist, damit der Jahreswechsel nicht faelschlich als
+Pipeline-Fehler gemeldet wird.
 
 [Mehr zur Motivation auf meinem Blog.](https://www.volz-fw.de/p/es-ist-sommer)
 
