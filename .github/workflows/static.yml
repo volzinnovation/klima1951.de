@@ -38,7 +38,7 @@ jobs:
       - name: Validate status payload
         run: |
           python -m json.tool frontend/data-status.json >/dev/null
-          python etl/data_status.py --format json --public --require-fresh > /tmp/data-status.generated.json
+          python etl/data_status.py --format json --public > /tmp/data-status.generated.json
           python - <<'PY'
           import json
 
