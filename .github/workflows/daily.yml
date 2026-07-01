@@ -53,6 +53,9 @@ jobs:
       - name: Print read-only data status
         run: python etl/data_status.py --format json
 
+      - name: Generate public data status
+        run: python etl/data_status.py --format json --public > frontend/data-status.json
+
       - name: Commit and push changes
         env:
           PAT_TOKEN: ${{ secrets.DAILY_PAT }}

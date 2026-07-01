@@ -1,0 +1,285 @@
+.status-body {
+    background: #f1f5f7;
+    color: #17212b;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin: 0;
+}
+
+.status-shell {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.status-topbar {
+    align-items: center;
+    border-bottom: 1px solid #d9e2e7;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+}
+
+.status-link {
+    align-items: center;
+    border: 1px solid #b9c6ce;
+    border-radius: 8px;
+    color: #1f5f67;
+    display: inline-flex;
+    font-weight: 700;
+    gap: 0.4rem;
+    min-height: 2.5rem;
+    padding: 0.55rem 0.8rem;
+    text-decoration: none;
+}
+
+.status-link:hover {
+    background: #eef6f5;
+}
+
+.status-eyebrow {
+    color: #1d6d68;
+    font-size: 0.9rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.status-title {
+    color: #111b23;
+    font-size: 2rem;
+    font-weight: 850;
+    line-height: 1.15;
+    margin: 0.25rem 0 0;
+}
+
+.status-intro,
+.status-muted {
+    color: #5d6b75;
+    line-height: 1.5;
+}
+
+.status-intro {
+    font-size: 0.95rem;
+    margin: 0.55rem 0 0;
+    max-width: 46rem;
+}
+
+.status-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.status-panel-head {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+}
+
+.status-panel-title {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.status-section-title {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.status-muted,
+.status-metric-note {
+    font-size: 0.9rem;
+    margin: 0.35rem 0 0;
+}
+
+.status-summary {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+    margin-top: 1.25rem;
+}
+
+.status-panel {
+    background: #ffffff;
+    border: 1px solid #d9e2e7;
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(39, 52, 67, 0.07);
+    min-width: 0;
+    padding: 1rem;
+}
+
+.status-panel h2,
+.status-panel h3 {
+    color: #17212b;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.status-grid {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 1rem;
+}
+
+.status-metric {
+    background: #f7faf9;
+    border: 1px solid #dce7e6;
+    border-radius: 8px;
+    min-height: 112px;
+    min-width: 0;
+    padding: 0.9rem;
+}
+
+.status-metric span {
+    color: #64727b;
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.status-metric strong {
+    color: #16242c;
+    display: block;
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-top: 0.45rem;
+}
+
+.status-chip {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 800;
+    min-height: 1.75rem;
+    padding: 0.25rem 0.7rem;
+}
+
+.status-chip.ok {
+    background: #dff5e7;
+    color: #136238;
+}
+
+.status-chip.warn {
+    background: #fff2c8;
+    color: #805200;
+}
+
+.status-chip.missing,
+.status-chip.error {
+    background: #ffe2de;
+    color: #9b1c16;
+}
+
+.completion-track {
+    background: #e8eef0;
+    border-radius: 999px;
+    height: 0.65rem;
+    margin-top: 1rem;
+    overflow: hidden;
+    width: 100%;
+}
+
+.completion-fill {
+    background: #16836f;
+    height: 100%;
+    width: 0;
+}
+
+.status-sections {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    margin-top: 1rem;
+}
+
+.status-bottom {
+    margin-top: 1rem;
+}
+
+.status-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.8rem;
+}
+
+.status-row {
+    align-items: flex-start;
+    border-bottom: 1px solid #edf1f3;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    padding-bottom: 0.75rem;
+}
+
+.status-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.status-row p {
+    color: #5d6b75;
+    line-height: 1.45;
+    margin: 0.15rem 0 0;
+}
+
+.status-table-wrap {
+    max-width: 100%;
+    margin-top: 0.9rem;
+    overflow-x: auto;
+}
+
+.status-table {
+    border-collapse: collapse;
+    min-width: 520px;
+    width: 100%;
+}
+
+.status-table th,
+.status-table td {
+    border-bottom: 1px solid #e5ebee;
+    padding: 0.72rem 0.65rem;
+    text-align: left;
+}
+
+.status-table th {
+    color: #55646e;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.status-table td {
+    color: #1d2a33;
+    font-size: 0.92rem;
+}
+
+.status-table td:last-child,
+.status-table th:last-child {
+    text-align: right;
+}
+
+.file-path {
+    color: #273640;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.84rem;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+    .status-summary,
+    .status-sections,
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

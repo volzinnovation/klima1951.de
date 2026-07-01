@@ -1,4 +1,4 @@
-# klima1915.de - Web-Frontend für DWD HYRAS Wetterdaten
+# klima1951.de - Web-Frontend für DWD HYRAS Wetterdaten
 
 Der Deutsche Wetterdienst (DWD) veröffentlicht [HYRAS-Datensätze – hydrometeorologische Rasterdaten](https://www.dwd.de/DE/leistungen/hyras/hyras.html), die folgende Messwerte tagesgenau enthalten:
 
@@ -12,6 +12,7 @@ Die HYRAS-Daten liegen im Format NetCDF-4 vor. Die Python Programme im Verzeichn
 Die Ortsauswahl wird über [misc/cities.json](https://github.com/volzinnovation/klima1951.de/blob/main/misc/cities.json) gesteuert, diese kann über eine Excel-Tabelle der deutschen Städte und Gemeinden und deren Koordinaten und Einwohnerzahl neu generiert werden.
 
 Das Verzeichnis frontend wird auf [https://klima1951.de/](https://klima1951.de/) gehostet.
+Der öffentliche Datenstatus ist unter [https://klima1951.de/status.html](https://klima1951.de/status.html) verfügbar.
 
 Die Daten werden täglich aktualisiert, dies erledigt der Workflow [daily.yml](https://github.com/volzinnovation/klima1951.de/blob/main/.github/workflows/daily.yml).
 
@@ -23,6 +24,7 @@ ohne ETL-Neulauf geprueft werden:
 ```bash
 python etl/data_status.py
 python etl/data_status.py --format json
+python etl/data_status.py --format json --public > frontend/data-status.json
 ```
 
 Der Bericht zaehlt konfigurierte Orte, vorhandene `all-years.json`- und

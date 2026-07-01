@@ -1,0 +1,101 @@
+{
+  "checks": [
+    {
+      "detail": "60 cities in misc/cities.json",
+      "name": "cities_configured",
+      "status": "ok"
+    },
+    {
+      "detail": "60 of 60 city outputs complete",
+      "name": "city_json_outputs_complete",
+      "status": "ok"
+    },
+    {
+      "detail": "observed metrics: hurs, pr, tas, tasmax, tasmin; missing: none",
+      "name": "hyras_metric_files_present",
+      "status": "ok"
+    }
+  ],
+  "city_outputs": {
+    "all_years_total_bytes": 220628276,
+    "complete_city_outputs": 60,
+    "configured_cities": 60,
+    "missing_city_outputs": 0,
+    "missing_examples": [],
+    "stats_files_with_years": 60,
+    "stats_max_year": 2025,
+    "stats_min_year": 1951
+  },
+  "files": {
+    "cities_json": {
+      "bytes": 5258,
+      "exists": true,
+      "modified_at_utc": "2025-07-02T13:14:21.921617+00:00",
+      "path": "misc/cities.json"
+    }
+  },
+  "generated_at_utc": "2026-07-01T13:11:48.302757+00:00",
+  "hyras": {
+    "files": [
+      {
+        "bytes": 119215829,
+        "exists": true,
+        "modified_at_utc": "2025-07-30T22:19:15.733886+00:00",
+        "path": "data/hyras/hurs_hyras_1_2025_v6-0_de.nc"
+      },
+      {
+        "bytes": 71071987,
+        "exists": true,
+        "modified_at_utc": "2025-07-30T22:19:05.844147+00:00",
+        "path": "data/hyras/pr_hyras_1_2025_v6-0_de.nc"
+      },
+      {
+        "bytes": 83937076,
+        "exists": true,
+        "modified_at_utc": "2025-07-30T22:18:52.222904+00:00",
+        "path": "data/hyras/tas_hyras_1_2025_v6-0_de.nc"
+      },
+      {
+        "bytes": 92405615,
+        "exists": true,
+        "modified_at_utc": "2025-07-30T22:18:59.826618+00:00",
+        "path": "data/hyras/tasmax_hyras_1_2025_v6-0_de.nc"
+      },
+      {
+        "bytes": 91694309,
+        "exists": true,
+        "modified_at_utc": "2025-07-30T22:18:45.317059+00:00",
+        "path": "data/hyras/tasmin_hyras_1_2025_v6-0_de.nc"
+      }
+    ],
+    "hyras_file_count": 5,
+    "metrics": {
+      "hurs": {
+        "file_count": 1,
+        "max_year": 2025,
+        "min_year": 2025
+      },
+      "pr": {
+        "file_count": 1,
+        "max_year": 2025,
+        "min_year": 2025
+      },
+      "tas": {
+        "file_count": 1,
+        "max_year": 2025,
+        "min_year": 2025
+      },
+      "tasmax": {
+        "file_count": 1,
+        "max_year": 2025,
+        "min_year": 2025
+      },
+      "tasmin": {
+        "file_count": 1,
+        "max_year": 2025,
+        "min_year": 2025
+      }
+    }
+  },
+  "public": true
+}

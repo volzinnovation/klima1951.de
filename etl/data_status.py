@@ -39,6 +39,11 @@ def parse_args() -> argparse.Namespace:
         default=10,
         help="Maximum missing city artifacts to include in the report.",
     )
+    parser.add_argument(
+        "--public",
+        action="store_true",
+        help="Remove local filesystem roots from JSON output for public frontend use.",
+    )
     return parser.parse_args()
 
 
@@ -209,6 +214,34 @@ def build_status(root: Path, max_missing: int) -> dict[str, Any]:
     }
 
 
+def scrub_local_paths(status: dict[str, Any], root: Path) -> None:
+    """Mutate a status snapshot so it is safe to publish as static JSON."""
+
+    root = root.resolve()
+    status.pop("root", None)
+    status["public"] = True
+
+    def scrub_file_info(file_info: dict[str, Any]) -> None:
+        raw_path = file_info.get("path")
+        if not raw_path:
+            return
+        path = Path(str(raw_path))
+        try:
+            file_info["path"] = path.resolve().relative_to(root).as_posix()
+        except ValueError:
+            file_info["path"] = path.name
+
+    for file_info in status.get("files", {}).values():
+        if isinstance(file_info, dict):
+            scrub_file_info(file_info)
+
+    hyras_files = status.get("hyras", {}).get("files", [])
+    if isinstance(hyras_files, list):
+        for file_info in hyras_files:
+            if isinstance(file_info, dict):
+                scrub_file_info(file_info)
+
+
 def render_bytes(num_bytes: int) -> str:
     if num_bytes >= 1024 * 1024 * 1024:
         return f"{num_bytes / (1024 * 1024 * 1024):.2f} GiB"
@@ -260,6 +293,8 @@ def render_markdown(status: dict[str, Any]) -> str:
 def main() -> int:
     args = parse_args()
     status = build_status(args.root, args.max_missing)
+    if args.public:
+        scrub_local_paths(status, args.root)
     if args.format == "json":
         print(json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True))
     else:

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Datenstatus - klima1951.de</title>
+    <link rel="canonical" href="https://klima1951.de/status.html" />
+    <meta
+      name="description"
+      content="Oeffentlicher Datenstatus fuer klima1951.de mit Abdeckung der Staedte, HYRAS-Dateien und taeglichen ETL-Pruefungen."
+    />
+    <meta property="og:site_name" content="klima1951.de" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Datenstatus - klima1951.de" />
+    <meta
+      property="og:description"
+      content="Abdeckung, Aktualitaet und Pruefstatus der oeffentlichen HYRAS-Datenpipeline."
+    />
+    <meta property="og:url" content="https://klima1951.de/status.html" />
+    <meta property="og:image" content="https://klima1951.de/social-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Datenstatus - klima1951.de" />
+    <meta
+      name="twitter:description"
+      content="Abdeckung, Aktualitaet und Pruefstatus der oeffentlichen HYRAS-Datenpipeline."
+    />
+    <meta name="twitter:image" content="https://klima1951.de/social-card.png" />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="status.css" />
+  </head>
+  <body class="status-body">
+    <main class="status-shell">
+      <div class="status-topbar">
+        <div>
+          <p class="status-eyebrow">klima1951.de</p>
+          <h1 class="status-title">Datenstatus</h1>
+          <p class="status-intro">
+            Abdeckung, Aktualitaet und Pruefstatus der oeffentlichen
+            HYRAS-Datenpipeline.
+          </p>
+        </div>
+        <nav class="status-nav" aria-label="Seitennavigation">
+          <a class="status-link" href="index.html">Zurueck</a>
+          <a class="status-link" href="data-status.json">JSON</a>
+          <a
+            class="status-link"
+            href="https://github.com/volzinnovation/klima1951.de"
+            target="_blank"
+            rel="noopener"
+            >GitHub</a
+          >
+        </nav>
+      </div>
+
+      <section class="status-summary" aria-labelledby="status-overview-title">
+        <div class="status-panel">
+          <div class="status-panel-head">
+            <div>
+              <h2 id="status-overview-title" class="status-panel-title">
+                Pipeline-Gesundheit
+              </h2>
+              <p class="status-muted">
+                Generiert am <span id="generated-at">...</span>
+              </p>
+            </div>
+            <span id="overall-status" class="status-chip warn">Lade Daten</span>
+          </div>
+          <div class="status-grid">
+            <div class="status-metric">
+              <span>Stadt-Ausgaben</span>
+              <strong id="city-complete">...</strong>
+              <p id="city-total" class="status-metric-note"></p>
+            </div>
+            <div class="status-metric">
+              <span>Statistik-Zeitraum</span>
+              <strong id="year-span">...</strong>
+              <p class="status-metric-note">aus Stadt-CSV-Dateien</p>
+            </div>
+            <div class="status-metric">
+              <span>HYRAS-Dateien</span>
+              <strong id="hyras-count">...</strong>
+              <p class="status-metric-note">NetCDF-Quellen lokal</p>
+            </div>
+            <div class="status-metric">
+              <span>JSON-Datenvolumen</span>
+              <strong id="payload-size">...</strong>
+              <p class="status-metric-note">all-years.json gesamt</p>
+            </div>
+          </div>
+          <div class="completion-track" aria-hidden="true">
+            <div id="completion-fill" class="completion-fill"></div>
+          </div>
+        </div>
+
+        <div class="status-panel">
+          <h2 class="status-panel-title">Pruefungen</h2>
+          <div id="checks-list" class="status-list"></div>
+        </div>
+      </section>
+
+      <section class="status-sections">
+        <div class="status-panel">
+          <h3 class="status-section-title">HYRAS-Metriken</h3>
+          <div class="status-table-wrap">
+            <table class="status-table">
+              <thead>
+                <tr>
+                  <th scope="col">Metrik</th>
+                  <th scope="col">Dateien</th>
+                  <th scope="col">Jahre</th>
+                </tr>
+              </thead>
+              <tbody id="metric-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="status-panel">
+          <h3 class="status-section-title">Dateifristen</h3>
+          <div id="files-list" class="status-list"></div>
+        </div>
+      </section>
+
+      <section class="status-panel status-bottom">
+        <h3 class="status-section-title">Fehlende Stadt-Ausgaben</h3>
+        <div id="missing-list" class="status-list"></div>
+      </section>
+    </main>
+
+    <script src="status.js"></script>
+  </body>
+</html>
