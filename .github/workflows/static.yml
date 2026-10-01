@@ -6,6 +6,12 @@ on:
   push:
     branches: ["main"]
 
+  # GITHUB_TOKEN pushes from ETL do not trigger another push workflow.
+  workflow_run:
+    workflows: ["Daily Data Processing"]
+    types: [completed]
+    branches: ["main"]
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -24,6 +30,14 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
+    # Only successful, trusted main-branch ETL runs may trigger publication.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       (github.event.workflow_run.event == 'schedule' ||
+        github.event.workflow_run.event == 'workflow_dispatch'))
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -31,6 +45,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          # For workflow_run this is the default branch tip at completion,
+          # including the ETL commit, not the ETL run's older head_sha.
+          ref: ${{ github.sha }}
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
