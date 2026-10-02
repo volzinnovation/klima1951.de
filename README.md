@@ -16,6 +16,19 @@ Der öffentliche Datenstatus ist unter [https://klima1951.de/status.html](https:
 
 Die Daten werden täglich aktualisiert, dies erledigt der Workflow [daily.yml](https://github.com/volzinnovation/klima1951.de/blob/main/.github/workflows/daily.yml).
 
+Die Veröffentlichung des Frontends übernimmt [static.yml](https://github.com/volzinnovation/klima1951.de/blob/main/.github/workflows/static.yml).
+Sie läuft bei Pushes auf `main`, auf manuelle Anforderung und nach einem
+erfolgreichen täglichen oder manuell gestarteten ETL-Lauf auf `main` im selben
+Repository. Der Abschluss-Trigger ist nötig, weil Pushes mit `GITHUB_TOKEN`
+keinen weiteren Push-Workflow auslösen. Dabei wird der Stand des Default-Branches
+zum Abschluss des ETL-Laufs veröffentlicht, einschließlich des neuen Daten-Commits.
+Der `head_sha` des ETL-Laufs wäre dafür zu alt, da er den Stand vor dem ETL-Commit bezeichnet.
+
+Nach einer Veröffentlichung lässt sich `generated_at_utc` in
+[data-status.json](https://klima1951.de/data-status.json) mit dem veröffentlichten
+Commit unter `frontend/data-status.json` vergleichen. Ein erfolgreicher ETL-Lauf
+allein bestätigt noch nicht, dass der neue Status öffentlich erreichbar ist.
+
 ## Lokaler Datenstatus
 
 Der aktuelle Stand der lokalen HYRAS-Dateien und der generierten Orts-JSONs kann
