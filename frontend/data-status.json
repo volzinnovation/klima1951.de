@@ -22,7 +22,7 @@
     }
   ],
   "city_outputs": {
-    "all_years_total_bytes": 221401140,
+    "all_years_total_bytes": 221408858,
     "complete_city_outputs": 60,
     "configured_cities": 60,
     "missing_city_outputs": 0,
@@ -39,12 +39,12 @@
     "cities_json": {
       "bytes": 5258,
       "exists": true,
-      "modified_at_utc": "2026-10-06T16:32:34.280139+00:00",
+      "modified_at_utc": "2026-10-07T17:18:51.897309+00:00",
       "path": "misc/cities.json"
     }
   },
   "freshness": {
-    "as_of_utc": "2026-10-06T16:33:38.282045+00:00",
+    "as_of_utc": "2026-10-07T17:19:47.890121+00:00",
     "detail": "Alle Stadt-Statistiken und HYRAS-Metriken reichen bis zum erwarteten vollstaendigen Jahr 2025.",
     "expected_latest_complete_year": 2025,
     "freshness_grace_days": 45,
@@ -63,37 +63,37 @@
     "stats_latest_complete_year": 2025,
     "status": "ok"
   },
-  "generated_at_utc": "2026-10-06T16:33:38.282045+00:00",
+  "generated_at_utc": "2026-10-07T17:19:47.890121+00:00",
   "hyras": {
     "files": [
       {
-        "bytes": 88227985,
+        "bytes": 88526119,
         "exists": true,
-        "modified_at_utc": "2026-10-06T16:32:55.769939+00:00",
+        "modified_at_utc": "2026-10-07T17:19:10.631447+00:00",
         "path": "data/hyras/hurs_hyras_1_2026_v6-1_de.nc"
       },
       {
-        "bytes": 37558476,
+        "bytes": 37578655,
         "exists": true,
-        "modified_at_utc": "2026-10-06T16:32:54.787950+00:00",
+        "modified_at_utc": "2026-10-07T17:19:09.752460+00:00",
         "path": "data/hyras/pr_hyras_1_2026_v6-1_de.nc"
       },
       {
-        "bytes": 50783267,
+        "bytes": 50931287,
         "exists": true,
-        "modified_at_utc": "2026-10-06T16:32:53.710075+00:00",
+        "modified_at_utc": "2026-10-07T17:19:08.260484+00:00",
         "path": "data/hyras/tas_hyras_1_2026_v6-1_de.nc"
       },
       {
-        "bytes": 61134519,
+        "bytes": 61296178,
         "exists": true,
-        "modified_at_utc": "2026-10-06T16:32:54.244022+00:00",
+        "modified_at_utc": "2026-10-07T17:19:09.120470+00:00",
         "path": "data/hyras/tasmax_hyras_1_2026_v6-1_de.nc"
       },
       {
-        "bytes": 60438534,
+        "bytes": 60635460,
         "exists": true,
-        "modified_at_utc": "2026-10-06T16:32:53.254071+00:00",
+        "modified_at_utc": "2026-10-07T17:19:07.699493+00:00",
         "path": "data/hyras/tasmin_hyras_1_2026_v6-1_de.nc"
       }
     ],
